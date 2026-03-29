@@ -1,15 +1,15 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "env": {
-    "NODE_ENV": "production"
-  },
+  "outputDirectory": "dist",
   "functions": {
     "api/index.ts": {
-      "includeFiles": "dist/**,server/**"
+      "includeFiles": "server/**"
     }
   },
   "routes": [
-    { "src": "/(.*)", "dest": "/api/index.ts" }
+    { "src": "/api/(.*)", "dest": "/api/index" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

@@ -4,7 +4,9 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbDir = path.join(__dirname, '..', 'data');
+const dbDir = process.env.NODE_ENV === 'production'
+  ? '/tmp'
+  : path.join(__dirname, '..', 'data');
 
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
