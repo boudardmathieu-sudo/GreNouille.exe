@@ -1,0 +1,58 @@
+2026-03-29 16:39:38.570 [error]  npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.
+    at requireWithFriendlyError (/var/task/node_modules/rollup/dist/native.js:115:9)
+    at Object.<anonymous> (/var/task/node_modules/rollup/dist/native.js:124:76)
+    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
+    at A.d._compile (/opt/rust/bytecode.js:2:3186)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1300:12)
+    at /opt/rust/nodejs.js:2:13531
+    at Module.pn (/opt/rust/nodejs.js:2:13909)
+    at Xe.e.<computed>.Ye._load (/opt/rust/nodejs.js:2:13501) {
+  [cause]: Error: Cannot find module '@rollup/rollup-linux-x64-gnu'
+  Require stack:
+  - /var/task/node_modules/rollup/dist/native.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1421:15)
+      at defaultResolveImpl (node:internal/modules/cjs/loader:1059:19)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1064:22)
+      at Module.<anonymous> (node:internal/modules/cjs/loader:1227:37)
+      at /opt/rust/nodejs.js:2:13531
+      at Module.pn (/opt/rust/nodejs.js:2:13909)
+      at Xe.e.<computed>.Ye._load (/opt/rust/nodejs.js:2:13501)
+      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+      at Module.require (node:internal/modules/cjs/loader:1504:12) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '/var/task/node_modules/rollup/dist/native.js' ]
+  }
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.
+    at requireWithFriendlyError (/var/task/node_modules/rollup/dist/native.js:115:9)
+    at Object.<anonymous> (/var/task/node_modules/rollup/dist/native.js:124:76)
+    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
+    at A.d._compile (/opt/rust/bytecode.js:2:3186)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1300:12)
+    at /opt/rust/nodejs.js:2:13531
+    at Module.pn (/opt/rust/nodejs.js:2:13909)
+    at Xe.e.<computed>.Ye._load (/opt/rust/nodejs.js:2:13501) {
+  [cause]: Error: Cannot find module '@rollup/rollup-linux-x64-gnu'
+  Require stack:
+  - /var/task/node_modules/rollup/dist/native.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1421:15)
+      at defaultResolveImpl (node:internal/modules/cjs/loader:1059:19)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1064:22)
+      at Module.<anonymous> (node:internal/modules/cjs/loader:1227:37)
+      at /opt/rust/nodejs.js:2:13531
+      at Module.pn (/opt/rust/nodejs.js:2:13909)
+      at Xe.e.<computed>.Ye._load (/opt/rust/nodejs.js:2:13501)
+      at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+      at Module.require (node:internal/modules/cjs/loader:1504:12) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '/var/task/node_modules/rollup/dist/native.js' ]
+  }
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
