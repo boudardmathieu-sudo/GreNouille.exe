@@ -1,6 +1,6 @@
 import express from "express";
-import { authenticateToken } from "./auth";
-import { logSystemEvent } from "./logs";
+import { authenticateToken } from "./auth.js";
+import { logSystemEvent } from "./logs.js";
 
 const router = express.Router();
 
