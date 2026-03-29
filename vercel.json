@@ -4,15 +4,11 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "builds": [
-    {
-      "src": "server.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["dist/**", "server/**", "data/**"]
-      }
+  "functions": {
+    "server.ts": {
+      "includeFiles": "dist/**,server/**"
     }
-  ],
+  },
   "routes": [
     { "src": "/(.*)", "dest": "/server.ts" }
   ]

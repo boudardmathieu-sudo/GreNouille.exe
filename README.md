@@ -1,46 +1,125 @@
-# Nexus Panel
+<div align="center">
 
-A personal dashboard panel with Spotify, Discord and system analytics integrations. Built with React, Express and Supabase.
+# 🧠 NEXUS PANEL
 
-## Stack
+*"Sometimes you gotta run before you can walk."*
+— Tony Stark
 
-- **Frontend** — React 19, Tailwind CSS 4, React Router 7, Recharts
-- **Backend** — Express, SQLite (better-sqlite3)
-- **Auth** — Supabase
-- **Deployment** — Vercel
+**Your personal command center. Think J.A.R.V.I.S., but it's yours.**
 
-## Run Locally
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com)
+
+</div>
+
+---
+
+## 🔍 What is this?
+
+Nexus is a **private dashboard** built to give you full visibility and control over your digital ecosystem — Spotify, Discord, system analytics and more — all in one sleek interface.
+
+No bloat. No ads. No nonsense. Just your data, your way.
+
+Think of it as your own **F.R.I.D.A.Y.** — always on, always watching, always ready.
+
+---
+
+## ⚡ Features
+
+| Feature | Description |
+|---|---|
+| 🎵 **Spotify** | Track your listening activity and stats |
+| 🎮 **Discord** | Monitor your server and activity |
+| 📊 **Analytics** | System metrics and usage graphs |
+| 📋 **Logs** | Full system log viewer |
+| 🔐 **Auth** | Secure login via Supabase |
+| 🗄️ **Database** | Local SQLite storage + admin panel |
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend** — React 19, Tailwind CSS 4, React Router 7, Recharts, Motion
+- **Backend** — Node.js, Express
+- **Auth** — Supabase (JWT-based)
+- **Database** — SQLite via better-sqlite3
+- **Hosting** — Vercel
+- **Language** — TypeScript (full-stack)
+
+---
+
+## 🚀 Run Locally
 
 **Prerequisites:** Node.js 18+
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+### 1. Clone & install
 
-2. Create a `.env` file at the root and fill in your credentials:
-   ```env
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-   JWT_SECRET=your_jwt_secret
-   ```
+```bash
+npm install
+```
 
-3. Start the dev server:
-   ```bash
-   npm run dev
-   ```
+### 2. Set up environment variables
 
-The app runs on [http://localhost:5000](http://localhost:5000).
+Create a `.env` file at the root:
 
-## Deploy to Vercel
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+JWT_SECRET=your_jwt_secret
 
-The project includes a `vercel.json` configuration. Just connect your repo to Vercel and add the environment variables listed above in the Vercel dashboard.
+# Optional integrations
+SPOTIFY_CLIENT_ID=...
+SPOTIFY_CLIENT_SECRET=...
+DISCORD_TOKEN=...
+```
 
-## Features
+### 3. Start the dev server
 
-- Authentication via Supabase
-- Spotify integration
-- Discord integration
-- System analytics & logs
-- SQLite local database
+```bash
+npm run dev
+```
+
+The panel will be live at → [http://localhost:5000](http://localhost:5000)
+
+---
+
+## ☁️ Deploy to Vercel
+
+1. Push your code to GitHub
+2. Import the repo on [vercel.com](https://vercel.com)
+3. Add your environment variables in the Vercel dashboard
+4. Deploy — Vercel handles the rest
+
+The `vercel.json` at the root is already configured. No extra setup needed.
+
+---
+
+## 📁 Project Structure
+
+```
+nexus/
+├── server.ts           # Express + Vite entry point
+├── server/
+│   ├── routes/         # API routes (auth, spotify, discord, logs...)
+│   ├── middleware/     # JWT auth middleware
+│   ├── db.ts           # SQLite setup & migrations
+│   └── lib/            # Server utilities (Supabase admin)
+├── src/
+│   ├── pages/          # React pages (Dashboard, Analytics, Spotify...)
+│   ├── components/     # Reusable UI components
+│   ├── context/        # Auth context
+│   └── lib/            # Frontend utilities & Supabase client
+└── data/
+    └── nexus.db        # Local SQLite database
+```
+
+---
+
+<div align="center">
+
+*"Jarvis, sometimes I think you've got more sense than I do."*
+*"Then I suspect you've been paying attention, sir."*
+
+Built with ❤️ — private, fast, yours.
+
+</div>
