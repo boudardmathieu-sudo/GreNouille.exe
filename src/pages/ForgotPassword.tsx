@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { supabase } from "../lib/supabase";
 import { Mail, Loader2 } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 const logoStyle = {
   background: "linear-gradient(145deg, rgba(79,110,247,0.22) 0%, rgba(124,58,237,0.14) 100%)",
@@ -25,6 +27,8 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const { t } = useLanguage();
+  const lc = t.forgot;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +38,7 @@ export default function ForgotPassword() {
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) throw error;
       setStatus("success");
-      setMessage("A reset link has been sent to your email address.");
+      setMessage(lc.successMsg);
     } catch (err: any) {
       setStatus("error");
       setMessage(err.message || "Failed to send reset link");
@@ -43,6 +47,9 @@ export default function ForgotPassword() {
 
   return (
     <div className="flex min-h-screen items-center justify-center" style={pageStyle}>
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -54,10 +61,8 @@ export default function ForgotPassword() {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={logoStyle}>
             <span className="text-3xl font-black select-none leading-none" style={{ color: "#fff", textShadow: "0 0 16px rgba(100,130,255,0.9), 0 0 36px rgba(79,110,247,0.5)", letterSpacing: "-0.04em", fontFamily: "system-ui, -apple-system, sans-serif" }}>N</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Reset Password</h1>
-          <p className="mt-2 text-sm text-gray-400">
-            Enter your email to receive a reset link
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-white">{lc.title}</h1>
+          <p className="mt-2 text-sm text-gray-400">{lc.subtitle}</p>
         </div>
 
         {status === "error" && (
@@ -71,17 +76,15 @@ export default function ForgotPassword() {
             <div className="mb-6 rounded-lg bg-indigo-500/10 p-4 text-sm text-indigo-300 border border-indigo-500/20">
               {message}
             </div>
-            <p className="text-xs text-gray-500 mb-4">
-              Check your inbox (and spam folder) for the link.
-            </p>
+            <p className="text-xs text-gray-500 mb-4">{lc.successSub}</p>
             <Link to="/login" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-              Return to Login
+              {lc.returnToLogin}
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-300">Email</label>
+              <label className="mb-2 block text-sm font-medium text-gray-300">{lc.email}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
                 <input
@@ -102,15 +105,15 @@ export default function ForgotPassword() {
               style={btnStyle}
             >
               {status === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
-              {status === "loading" ? "Sending..." : "Send Reset Link"}
+              {status === "loading" ? lc.submitting : lc.submit}
             </button>
           </form>
         )}
 
         <p className="mt-8 text-center text-sm text-gray-400">
-          Remember your password?{" "}
+          {lc.rememberPassword}{" "}
           <Link to="/login" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-            Sign in
+            {lc.signIn}
           </Link>
         </p>
       </motion.div>

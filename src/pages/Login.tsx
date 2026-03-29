@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { supabase } from "../lib/supabase";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -10,6 +12,8 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const lc = t.login;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +42,10 @@ export default function Login() {
           "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(79,110,247,0.18), transparent)",
       }}
     >
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -66,10 +74,8 @@ export default function Login() {
               N
             </span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Welcome Back</h1>
-          <p className="mt-2 text-sm text-gray-400">
-            Enter your credentials to access the panel
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-white">{lc.title}</h1>
+          <p className="mt-2 text-sm text-gray-400">{lc.subtitle}</p>
         </div>
 
         {error && (
@@ -80,7 +86,7 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300">Email</label>
+            <label className="mb-2 block text-sm font-medium text-gray-300">{lc.email}</label>
             <input
               type="email"
               value={email}
@@ -93,12 +99,12 @@ export default function Login() {
           </div>
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-300">Password</label>
+              <label className="block text-sm font-medium text-gray-300">{lc.password}</label>
               <Link
                 to="/forgot-password"
                 className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
               >
-                Forgot password?
+                {lc.forgotPassword}
               </Link>
             </div>
             <input
@@ -122,17 +128,17 @@ export default function Login() {
             }}
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? lc.submitting : lc.submit}
           </button>
         </form>
 
         <p className="mt-8 text-center text-sm text-gray-400">
-          Don't have an account?{" "}
+          {lc.noAccount}{" "}
           <Link
             to="/signup"
             className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
           >
-            Sign up
+            {lc.signUp}
           </Link>
         </p>
       </motion.div>

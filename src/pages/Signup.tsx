@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { supabase } from "../lib/supabase";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 const logoStyle = {
   background: "linear-gradient(145deg, rgba(79,110,247,0.22) 0%, rgba(124,58,237,0.14) 100%)",
@@ -29,6 +31,8 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const lc = t.signup;
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +60,9 @@ export default function Signup() {
   if (success) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={pageStyle}>
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -65,14 +72,14 @@ export default function Signup() {
           <div className="mb-4 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl" style={logoStyle}>
             <span className="text-3xl font-black select-none leading-none" style={{ color: "#fff", textShadow: "0 0 16px rgba(100,130,255,0.9)", letterSpacing: "-0.04em" }}>N</span>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-3">Check your email</h2>
+          <h2 className="text-2xl font-bold text-white mb-3">{lc.successTitle}</h2>
           <p className="text-gray-400 text-sm mb-6">
-            We've sent a confirmation link to{" "}
-            <span className="text-indigo-400">{email}</span>.
-            Please click it to activate your account.
+            {lc.successText}{" "}
+            <span className="text-indigo-400">{email}</span>.{" "}
+            {lc.successSub}
           </p>
           <Link to="/login" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors text-sm">
-            Back to login
+            {lc.backToLogin}
           </Link>
         </motion.div>
       </div>
@@ -81,6 +88,9 @@ export default function Signup() {
 
   return (
     <div className="flex min-h-screen items-center justify-center" style={pageStyle}>
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -92,8 +102,8 @@ export default function Signup() {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={logoStyle}>
             <span className="text-3xl font-black select-none leading-none" style={{ color: "#fff", textShadow: "0 0 16px rgba(100,130,255,0.9), 0 0 36px rgba(79,110,247,0.5)", letterSpacing: "-0.04em", fontFamily: "system-ui, -apple-system, sans-serif" }}>N</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Create Account</h1>
-          <p className="mt-2 text-sm text-gray-400">Join Nexus Dashboard today</p>
+          <h1 className="text-3xl font-bold tracking-tight text-white">{lc.title}</h1>
+          <p className="mt-2 text-sm text-gray-400">{lc.subtitle}</p>
         </div>
 
         {error && (
@@ -104,7 +114,7 @@ export default function Signup() {
 
         <form onSubmit={handleSignup} className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300">Username</label>
+            <label className="mb-2 block text-sm font-medium text-gray-300">{lc.username}</label>
             <input
               type="text"
               value={username}
@@ -116,7 +126,7 @@ export default function Signup() {
             />
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300">Email</label>
+            <label className="mb-2 block text-sm font-medium text-gray-300">{lc.email}</label>
             <input
               type="email"
               value={email}
@@ -128,7 +138,7 @@ export default function Signup() {
             />
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300">Password</label>
+            <label className="mb-2 block text-sm font-medium text-gray-300">{lc.password}</label>
             <input
               type="password"
               value={password}
@@ -147,14 +157,14 @@ export default function Signup() {
             style={btnStyle}
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? "Creating account..." : "Sign Up"}
+            {loading ? lc.submitting : lc.submit}
           </button>
         </form>
 
         <p className="mt-8 text-center text-sm text-gray-400">
-          Already have an account?{" "}
+          {lc.hasAccount}{" "}
           <Link to="/login" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-            Sign in
+            {lc.signIn}
           </Link>
         </p>
       </motion.div>
