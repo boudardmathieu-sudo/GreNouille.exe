@@ -5,11 +5,11 @@
     "NODE_ENV": "production"
   },
   "functions": {
-    "server.ts": {
+    "api/index.ts": {
       "includeFiles": "dist/**,server/**"
     }
   },
   "routes": [
-    { "src": "/(.*)", "dest": "/server.ts" }
+    { "src": "/(.*)", "dest": "/api/index.ts" }
   ]
 }

@@ -5,7 +5,9 @@
 *"Sometimes you gotta run before you can walk."*
 — Tony Stark
 
-**Your personal command center. Think J.A.R.V.I.S., but it's yours.**
+**Ton centre de commandement personnel. Pense à J.A.R.V.I.S., mais c'est le tien.**
+
+🇫🇷 *Interface entièrement en français*
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com)
 
