@@ -299,4 +299,54 @@ router.post("/player/previous", authenticateToken, async (req: any, res) => {
   }
 });
 
+router.put("/player/shuffle", authenticateToken, async (req: any, res) => {
+  const { state } = req.query;
+  const token = await getValidSpotifyToken(req.user.id);
+  if (!token) return res.status(401).json({ error: "Spotify not connected" });
+  try {
+    await axios.put(`https://api.spotify.com/v1/me/player/shuffle?state=${state}`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(err.response?.status || 500).json({ error: "Failed to toggle shuffle" });
+  }
+});
+
+router.put("/player/repeat", authenticateToken, async (req: any, res) => {
+  const { state } = req.query;
+  const token = await getValidSpotifyToken(req.user.id);
+  if (!token) return res.status(401).json({ error: "Spotify not connected" });
+  try {
+    await axios.put(`https://api.spotify.com/v1/me/player/repeat?state=${state}`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(err.response?.status || 500).json({ error: "Failed to set repeat" });
+  }
+});
+
+router.get("/player/recently-played", authenticateToken, async (req: any, res) => {
+  const token = await getValidSpotifyToken(req.user.id);
+  if (!token) return res.status(401).json({ error: "Spotify not connected" });
+  try {
+    const r = await axios.get("https://api.spotify.com/v1/me/player/recently-played?limit=10", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    res.json(r.data.items);
+  } catch (err: any) {
+    res.status(err.response?.status || 500).json({ error: "Failed to get recently played" });
+  }
+});
+
+router.post("/disconnect", authenticateToken, async (req: any, res) => {
+  try {
+    db.prepare("UPDATE users SET spotifyAccessToken = NULL, spotifyRefreshToken = NULL, spotifyTokenExpiry = NULL WHERE id = ?").run(req.user.id);
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: "Failed to disconnect Spotify" });
+  }
+});
+
 export default router;

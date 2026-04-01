@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Music, MessageSquare, LogOut, Settings, User, StickyNote, ChevronLeft, ChevronRight, Shield, Bookmark, CheckSquare } from "lucide-react";
+import { LayoutDashboard, Music, MessageSquare, LogOut, Settings, User, StickyNote, ChevronLeft, ChevronRight, Shield, Bookmark, CheckSquare, Lock } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useIsMobile } from "../hooks/useMediaQuery";
 
 export default function Sidebar() {
-  const { signOut, user } = useAuth();
+  const { signOut, lock, user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
@@ -53,9 +53,9 @@ export default function Sidebar() {
           <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors ${isActive ? "text-indigo-300" : "text-gray-500 hover:text-indigo-300"}`}>
             <User className="h-5 w-5 shrink-0" />
           </NavLink>
-          <NavLink to="/settings" className={({ isActive }) => `flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors ${isActive ? "text-indigo-300" : "text-gray-500 hover:text-indigo-300"}`}>
-            <Settings className="h-5 w-5 shrink-0" />
-          </NavLink>
+          <button onClick={lock} className="flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-gray-500 transition-colors hover:text-yellow-400">
+            <Lock className="h-5 w-5 shrink-0" />
+          </button>
           <button onClick={handleLogout} className="flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-gray-500 transition-colors hover:text-red-400">
             <LogOut className="h-5 w-5 shrink-0" />
           </button>
@@ -151,9 +151,20 @@ export default function Sidebar() {
         </div>
       )}
 
+      {/* Lock button (primary action) */}
+      <button
+        onClick={lock}
+        className={`group flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-3 text-sm font-medium text-gray-400 transition-colors duration-200 hover:bg-yellow-500/10 hover:text-yellow-400 mb-1`}
+        title={isCollapsed ? "Verrouiller" : undefined}
+      >
+        <Lock className={`h-5 w-5 shrink-0 transition-transform duration-200`} />
+        {!isCollapsed && <span className="whitespace-nowrap">Verrouiller</span>}
+      </button>
+
+      {/* Logout button (secondary) */}
       <button
         onClick={handleLogout}
-        className={`group flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-3 text-sm font-medium text-gray-400 transition-colors duration-200 hover:bg-red-500/10 hover:text-red-400`}
+        className={`group flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-3 text-sm font-medium text-gray-600 transition-colors duration-200 hover:bg-red-500/10 hover:text-red-400`}
         title={isCollapsed ? t.nav.logout : undefined}
       >
         <LogOut className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isCollapsed ? "" : "group-hover:-translate-x-1"}`} />

@@ -35,18 +35,20 @@ export default function Profile() {
     if (file.size > 2 * 1024 * 1024) { showToast("Image trop lourde (max 2 Mo)", false); return; }
     setUploadingAvatar(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        const base64 = ev.target?.result as string;
-        const res = await axios.patch("/api/auth/avatar", { avatar: base64 });
-        setUser({ ...user!, avatarUrl: res.data.avatarUrl } as any);
-        showToast("Photo de profil mise à jour !");
-        setUploadingAvatar(false);
-      };
-      reader.readAsDataURL(file);
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.onerror = () => reject(new Error("Lecture échouée"));
+        reader.readAsDataURL(file);
+      });
+      const res = await axios.patch("/api/auth/avatar", { avatar: base64 });
+      setUser({ ...user!, avatarUrl: res.data.avatarUrl } as any);
+      showToast("Photo de profil mise à jour !");
     } catch {
       showToast("Erreur lors du téléchargement", false);
+    } finally {
       setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 

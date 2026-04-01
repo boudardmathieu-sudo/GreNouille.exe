@@ -1,7 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import React, { useState } from "react";
+import { AnimatePresence } from "motion/react";
 import Splashscreen from "./components/Splashscreen";
 import LoadingScreen from "./components/LoadingScreen";
+import LockScreen from "./components/LockScreen";
 import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -19,6 +21,7 @@ import Database from "./pages/Database";
 import SystemLogs from "./pages/SystemLogs";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
+import { SpotifyProvider } from "./context/SpotifyContext";
 import { useIsMobile } from "./hooks/useMediaQuery";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -29,12 +32,18 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
+  const { isLocked, unlock, signOut, user } = useAuth();
 
   return (
     <div
       className="flex min-h-screen bg-[#05050f] text-white"
       style={{ backgroundImage: "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(79,110,247,0.12), transparent)" }}
     >
+      <AnimatePresence>
+        {isLocked && user && (
+          <LockScreen onUnlock={unlock} onLogout={async () => { await signOut(); }} />
+        )}
+      </AnimatePresence>
       <Sidebar />
       <main className={`flex-1 overflow-y-auto custom-scrollbar ${isMobile ? "pb-20" : ""}`}>
         {children}
@@ -156,9 +165,11 @@ export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <Router>
-          <AppContent />
-        </Router>
+        <SpotifyProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </SpotifyProvider>
       </AuthProvider>
     </LanguageProvider>
   );

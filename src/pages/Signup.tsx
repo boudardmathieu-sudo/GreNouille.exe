@@ -42,7 +42,10 @@ export default function Signup() {
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { username } },
+        options: {
+          data: { username },
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
       });
       if (authError) throw authError;
       if (data.session) {

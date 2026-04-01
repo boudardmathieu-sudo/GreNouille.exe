@@ -64,6 +64,18 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS discord_warnings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guildId TEXT NOT NULL,
+    userId TEXT NOT NULL,
+    username TEXT,
+    reason TEXT NOT NULL,
+    warnedBy TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
 const migrations = [
   "ALTER TABLE users ADD COLUMN supabase_id TEXT",
   "ALTER TABLE users ADD COLUMN avatarUrl TEXT",

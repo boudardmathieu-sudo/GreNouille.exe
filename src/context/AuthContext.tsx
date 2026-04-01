@@ -16,9 +16,12 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   session: Session | null;
+  isLocked: boolean;
   setUser: (user: User | null) => void;
   checkAuth: () => Promise<void>;
   signOut: () => Promise<void>;
+  lock: () => void;
+  unlock: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLocked, setIsLocked] = useState(false);
 
   const fetchProfile = async (currentSession: Session | null) => {
     if (!currentSession?.access_token) {
@@ -53,12 +57,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const recordSession = async (currentSession: Session | null) => {
     if (!currentSession?.access_token) return;
+    // Only record once per browser tab session to avoid duplicates
+    if (sessionStorage.getItem("nexus_session_recorded")) return;
     try {
       await axios.post("/api/auth/session/record", {}, {
         headers: getAuthHeaders(currentSession),
       });
+      sessionStorage.setItem("nexus_session_recorded", "1");
     } catch {
-      // Session recording is best-effort
+      // Best-effort
     }
   };
 
@@ -70,9 +77,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    sessionStorage.removeItem("nexus_session_recorded");
     setUser(null);
     setSession(null);
+    setIsLocked(false);
   };
+
+  const lock = () => setIsLocked(true);
+  const unlock = () => setIsLocked(false);
 
   useEffect(() => {
     supabase.auth.getSession()
@@ -106,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session?.access_token]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, session, setUser, checkAuth, signOut }}>
+    <AuthContext.Provider value={{ user, loading, session, isLocked, setUser, checkAuth, signOut, lock, unlock }}>
       {children}
     </AuthContext.Provider>
   );

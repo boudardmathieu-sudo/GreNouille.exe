@@ -11,6 +11,7 @@ import discordRoutes from "./server/routes/discord.js";
 import databaseRoutes from "./server/routes/database.js";
 import logsRoutes from "./server/routes/logs.js";
 import analyticsRoutes from "./server/routes/analytics.js";
+import { initDiscordGateway } from "./server/discord-gateway.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -57,6 +58,9 @@ async function startServer() {
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
+
+  // Init Discord Gateway (non-blocking)
+  initDiscordGateway().catch((err) => console.error("Discord gateway init error:", err));
 }
 
 startServer();
