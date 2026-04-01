@@ -13,6 +13,19 @@
 html, body {
   background-color: #050505;
   color: #ffffff;
+  cursor: default;
+}
+
+* {
+  cursor: default;
+}
+
+a, button, [role="button"], label[for], select, input[type="submit"], input[type="button"], input[type="range"], input[type="checkbox"], input[type="radio"] {
+  cursor: pointer;
+}
+
+input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="search"], input[type="url"], input[type="tel"], textarea {
+  cursor: text;
 }
 
 /* Custom scrollbar for webkit */

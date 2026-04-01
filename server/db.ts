@@ -65,6 +65,24 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_sessions (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT 'Nouvelle conversation',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS ai_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sessionId TEXT NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sessionId) REFERENCES ai_sessions(id) ON DELETE CASCADE
+  );
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS discord_warnings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     guildId TEXT NOT NULL,

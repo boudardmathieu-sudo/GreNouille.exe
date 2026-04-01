@@ -19,6 +19,7 @@ import Settings from "./pages/Settings";
 import Security from "./pages/Security";
 import Database from "./pages/Database";
 import SystemLogs from "./pages/SystemLogs";
+import AI from "./pages/AI";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { SpotifyProvider } from "./context/SpotifyContext";
@@ -152,6 +153,16 @@ function AppContent() {
           <PrivateRoute>
             <AppLayout>
               <SystemLogs />
+            </AppLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/ai"
+        element={
+          <PrivateRoute>
+            <AppLayout>
+              <AI />
             </AppLayout>
           </PrivateRoute>
         }

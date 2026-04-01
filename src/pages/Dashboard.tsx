@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Shield, Activity, Users, Zap, Plus, X, Music, Cloud, MessageSquare, StickyNote, Link2, RefreshCw, FileDown, Check } from "lucide-react";
 import axios from "axios";
@@ -11,6 +12,11 @@ const ALL_WIDGETS = [
   { id: "notes", label: "Notes rapides", icon: StickyNote, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
   { id: "links", label: "Liens rapides", icon: Link2, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20" },
 ];
+
+const WIDGET_LINKS: Record<string, string> = {
+  spotify: "/spotify",
+  discord: "/discord",
+};
 
 const WIDGET_STORAGE_KEY = "nexus-active-widgets";
 const NOTE_WIDGET_KEY = "nexus-widget-note";
@@ -184,6 +190,7 @@ function WidgetContent({ id }: { id: string }) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [easterEggActive, setEasterEggActive] = useState(false);
   const [konamiIndex, setKonamiIndex] = useState(0);
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
@@ -350,7 +357,11 @@ export default function Dashboard() {
                 return (
                   <motion.div key={wid} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className={`relative rounded-xl border ${w.border} ${w.bg} p-4 group`}>
                     <div className="mb-3 flex items-center justify-between">
-                      <div className={`flex items-center gap-2 text-sm font-semibold ${w.color}`}>
+                      <div
+                        className={`flex items-center gap-2 text-sm font-semibold ${w.color} ${WIDGET_LINKS[wid] ? "hover:opacity-80 transition-opacity" : ""}`}
+                        style={WIDGET_LINKS[wid] ? { cursor: "pointer" } : undefined}
+                        onClick={() => WIDGET_LINKS[wid] && navigate(WIDGET_LINKS[wid])}
+                      >
                         <w.icon className="h-4 w-4" />
                         {w.label}
                       </div>

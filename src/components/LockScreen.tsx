@@ -38,8 +38,14 @@ export default function LockScreen({ onUnlock, onLogout }: LockScreenProps) {
       setPassword("");
       onUnlock();
     } catch (err: any) {
-      const msg = err.response?.data?.error;
-      setError(msg === "Incorrect password" ? "Mot de passe incorrect" : "Erreur de vérification");
+      const msg = err.response?.data?.error || "";
+      if (msg === "Incorrect password") {
+        setError("Mot de passe incorrect");
+      } else if (msg.includes("No password set") || msg.includes("no password")) {
+        setError("Aucun mot de passe défini. Définissez-en un dans votre profil.");
+      } else {
+        setError("Erreur de vérification");
+      }
       setPassword("");
       triggerShake();
     } finally {

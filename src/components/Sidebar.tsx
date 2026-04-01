@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Music, MessageSquare, LogOut, Settings, User, StickyNote, ChevronLeft, ChevronRight, Shield, Bookmark, CheckSquare, Lock } from "lucide-react";
+import { LayoutDashboard, Music, MessageSquare, LogOut, Settings, User, StickyNote, ChevronLeft, ChevronRight, Shield, Bookmark, CheckSquare, Lock, Bot } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useIsMobile } from "../hooks/useMediaQuery";
@@ -22,6 +22,7 @@ export default function Sidebar() {
 
   const navItems = [
     { to: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
+    { to: "/ai", icon: Bot, label: "NEXUS AI" },
     { to: "/spotify", icon: Music, label: t.nav.spotify },
     { to: "/discord", icon: MessageSquare, label: t.nav.discord },
     { to: "/analytics", icon: StickyNote, label: t.nav.analytics },

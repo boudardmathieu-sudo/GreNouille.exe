@@ -166,6 +166,9 @@ router.post("/verify-password", authenticateToken, async (req: any, res) => {
     if (!password) return res.status(400).json({ error: "Password required" });
     const user = db.prepare("SELECT password FROM users WHERE id = ?").get(req.user.id) as any;
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user.password || user.password.trim() === "") {
+      return res.status(401).json({ error: "No password set. Please set a password in your profile." });
+    }
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: "Incorrect password" });
     res.json({ success: true });

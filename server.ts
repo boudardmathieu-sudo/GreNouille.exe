@@ -11,6 +11,7 @@ import discordRoutes from "./server/routes/discord.js";
 import databaseRoutes from "./server/routes/database.js";
 import logsRoutes from "./server/routes/logs.js";
 import analyticsRoutes from "./server/routes/analytics.js";
+import aiRoutes from "./server/routes/ai.js";
 import { initDiscordGateway } from "./server/discord-gateway.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -19,7 +20,8 @@ async function startServer() {
   const app = express();
   const PORT = 5000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: "15mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "15mb" }));
   app.use(cookieParser());
 
   // API Routes
@@ -29,6 +31,7 @@ async function startServer() {
   app.use("/api/database", databaseRoutes);
   app.use("/api/logs", logsRoutes);
   app.use("/api/analytics", analyticsRoutes);
+  app.use("/api/ai", aiRoutes);
 
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });

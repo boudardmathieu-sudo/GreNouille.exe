@@ -83,7 +83,8 @@ export default function Profile() {
 
   const handleSaveDiscordId = async () => {
     try {
-      await axios.patch("/api/auth/profile", { discordId: discordUserId });
+      const res = await axios.patch("/api/auth/profile", { discordId: discordUserId });
+      setUser(res.data.user as any);
       showToast("ID Discord sauvegardé !", true);
     } catch (err: any) {
       showToast(err.response?.data?.error || "Erreur", false);
