@@ -1,13 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+// On utilise le préfixe NEXT_PUBLIC_ pour que les variables soient accessibles côté client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const placeholderUrl = "https://placeholder.supabase.co";
-const placeholderKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiJ9.placeholder";
-
-export const supabase = createClient(
-  supabaseUrl || placeholderUrl,
-  supabaseAnonKey || placeholderKey
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
