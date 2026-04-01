@@ -24,7 +24,7 @@ export const authenticateToken = async (req: any, res: any, next: any) => {
       "user";
     try {
       db.prepare(
-        "INSERT INTO users (supabase_id, username, email, password, discordId, avatarUrl, twoFactorEnabled) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO users (supabase_id, username, email, password, discordId, avatarUrl, twoFactorEnabled, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
       ).run(
         user.id,
         username,
@@ -32,7 +32,10 @@ export const authenticateToken = async (req: any, res: any, next: any) => {
         "",
         meta.discordId || null,
         meta.avatarUrl || null,
-        meta.twoFactorEnabled ? 1 : 0
+        meta.twoFactorEnabled ? 1 : 0,
+        meta.spotifyAccessToken || null,
+        meta.spotifyRefreshToken || null,
+        meta.spotifyTokenExpiry || null
       );
       dbUser = db.prepare("SELECT * FROM users WHERE supabase_id = ?").get(user.id) as any;
     } catch (e) {
@@ -55,6 +58,15 @@ export const authenticateToken = async (req: any, res: any, next: any) => {
     }
     if (meta.twoFactorEnabled !== undefined && dbUser.twoFactorEnabled !== (meta.twoFactorEnabled ? 1 : 0)) {
       updates.push("twoFactorEnabled = ?"); vals.push(meta.twoFactorEnabled ? 1 : 0);
+    }
+    if (meta.spotifyAccessToken && !dbUser.spotifyAccessToken) {
+      updates.push("spotifyAccessToken = ?"); vals.push(meta.spotifyAccessToken);
+    }
+    if (meta.spotifyRefreshToken && !dbUser.spotifyRefreshToken) {
+      updates.push("spotifyRefreshToken = ?"); vals.push(meta.spotifyRefreshToken);
+    }
+    if (meta.spotifyTokenExpiry && !dbUser.spotifyTokenExpiry) {
+      updates.push("spotifyTokenExpiry = ?"); vals.push(meta.spotifyTokenExpiry);
     }
     if (updates.length > 0) {
       vals.push(dbUser.id);

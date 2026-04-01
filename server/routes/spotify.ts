@@ -2,6 +2,22 @@ import { Router } from "express";
 import axios from "axios";
 import db from "../db.js";
 import { authenticateToken } from "./auth.js";
+import { supabaseAdmin } from "../lib/supabaseAdmin.js";
+
+async function syncSpotifyToSupabase(supabaseId: string, accessToken: string, refreshToken: string, expiry: number) {
+  if (!supabaseId) return;
+  try {
+    await supabaseAdmin.auth.admin.updateUserById(supabaseId, {
+      user_metadata: {
+        spotifyAccessToken: accessToken,
+        spotifyRefreshToken: refreshToken,
+        spotifyTokenExpiry: expiry,
+      },
+    });
+  } catch {
+    // Non-blocking
+  }
+}
 
 const router = Router();
 
@@ -76,6 +92,12 @@ router.post("/callback", async (req, res) => {
     );
     stmt.run(access_token, refresh_token, expiry, userId);
 
+    // Sync to Supabase metadata for persistence across cold starts
+    const dbUser = db.prepare("SELECT supabase_id FROM users WHERE id = ?").get(userId) as any;
+    if (dbUser?.supabase_id) {
+      syncSpotifyToSupabase(dbUser.supabase_id, access_token, refresh_token, expiry);
+    }
+
     res.json({ success: true });
   } catch (err: any) {
     console.error("Spotify token exchange error:", err.response?.data || err.message);
@@ -110,11 +132,17 @@ async function getValidSpotifyToken(userId: number) {
         }
       );
 
-      const { access_token, expires_in } = response.data;
+      const { access_token, refresh_token: new_refresh, expires_in } = response.data;
       const expiry = Date.now() + expires_in * 1000;
+      const finalRefresh = new_refresh || user.spotifyRefreshToken;
 
-      const updateStmt = db.prepare("UPDATE users SET spotifyAccessToken = ?, spotifyTokenExpiry = ? WHERE id = ?");
-      updateStmt.run(access_token, expiry, userId);
+      db.prepare("UPDATE users SET spotifyAccessToken = ?, spotifyRefreshToken = ?, spotifyTokenExpiry = ? WHERE id = ?")
+        .run(access_token, finalRefresh, expiry, userId);
+
+      const dbUser = db.prepare("SELECT supabase_id FROM users WHERE id = ?").get(userId) as any;
+      if (dbUser?.supabase_id) {
+        syncSpotifyToSupabase(dbUser.supabase_id, access_token, finalRefresh, expiry);
+      }
 
       return access_token;
     } catch (err) {
@@ -357,6 +385,11 @@ router.get("/player/recently-played", authenticateToken, async (req: any, res) =
 router.post("/disconnect", authenticateToken, async (req: any, res) => {
   try {
     db.prepare("UPDATE users SET spotifyAccessToken = NULL, spotifyRefreshToken = NULL, spotifyTokenExpiry = NULL WHERE id = ?").run(req.user.id);
+    if (req.user.supabaseId) {
+      supabaseAdmin.auth.admin.updateUserById(req.user.supabaseId, {
+        user_metadata: { spotifyAccessToken: null, spotifyRefreshToken: null, spotifyTokenExpiry: null },
+      }).catch(() => {});
+    }
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: "Failed to disconnect Spotify" });

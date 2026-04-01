@@ -114,20 +114,20 @@ const splashOptions: { id: SplashTheme; label: string; description: string; prev
     ),
   },
   {
-    id: "matrix",
-    label: "Matrix",
-    description: "Pluie de code digitale",
+    id: "netflix",
+    label: "Netflix",
+    description: "Intro rouge dramatique",
     preview: (
       <div className="w-full h-full bg-black flex items-center justify-center rounded-xl overflow-hidden relative">
-        <div className="absolute inset-0 opacity-40">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="absolute text-[6px] font-mono" style={{ left: `${i * 14}%`, top: 0, color: "#4F6EF7", writingMode: "vertical-rl", lineHeight: "8px", opacity: Math.random() * 0.8 + 0.2 }}>
-              {["0","1","ア","イ","N","E","X"].join("")}
-            </div>
-          ))}
-        </div>
-        <div className="relative z-10 px-2 py-1 rounded border border-indigo-500/50 bg-black/70">
-          <span className="text-indigo-400 text-[8px] font-mono tracking-widest">NEXUS</span>
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 80% at 50% 50%, rgba(229,9,20,0.15) 0%, transparent 70%)" }} />
+        <div className="relative flex items-center justify-center">
+          <div className="absolute w-12 h-12 rounded-full" style={{ background: "radial-gradient(circle, rgba(229,9,20,0.4) 0%, transparent 70%)", filter: "blur(6px)" }} />
+          <svg width="24" height="32" viewBox="0 0 120 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="0" width="28" height="160" fill="#E50914" rx="2" />
+            <polygon points="32,0 88,160 88,100 32,0" fill="#E50914" />
+            <polygon points="32,60 88,160 32,160" fill="#E50914" />
+            <rect x="88" y="0" width="28" height="160" fill="#E50914" rx="2" />
+          </svg>
         </div>
       </div>
     ),

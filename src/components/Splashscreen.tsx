@@ -2,16 +2,17 @@ import SplashNexus from "./splashscreens/SplashNexus";
 import SplashiOS from "./splashscreens/SplashiOS";
 import SplashWindows from "./splashscreens/SplashWindows";
 import SplashMinimal from "./splashscreens/SplashMinimal";
-import SplashMatrix from "./splashscreens/SplashMatrix";
+import SplashNetflix from "./splashscreens/SplashNetflix";
 import { useEffect, useState } from "react";
 
-export type SplashTheme = "nexus" | "ios" | "windows" | "minimal" | "matrix";
+export type SplashTheme = "nexus" | "ios" | "windows" | "minimal" | "netflix";
 export const SPLASH_KEY = "nexus-splash-theme";
 export const SPLASH_ENABLED_KEY = "nexus-splash-enabled";
 
 export default function Splashscreen({ onComplete }: { onComplete: () => void }) {
   const [visible, setVisible] = useState(true);
-  const theme = (localStorage.getItem(SPLASH_KEY) as SplashTheme) || "nexus";
+  const rawTheme = localStorage.getItem(SPLASH_KEY) as SplashTheme;
+  const theme: SplashTheme = rawTheme === ("matrix" as any) ? "netflix" : rawTheme || "nexus";
   const enabled = localStorage.getItem(SPLASH_ENABLED_KEY) !== "false";
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function Splashscreen({ onComplete }: { onComplete: () => void })
     case "ios": return <SplashiOS {...props} />;
     case "windows": return <SplashWindows {...props} />;
     case "minimal": return <SplashMinimal {...props} />;
-    case "matrix": return <SplashMatrix {...props} />;
+    case "netflix": return <SplashNetflix {...props} />;
     default: return <SplashNexus {...props} />;
   }
 }
