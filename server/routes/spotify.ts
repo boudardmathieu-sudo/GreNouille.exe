@@ -299,6 +299,20 @@ router.post("/player/previous", authenticateToken, async (req: any, res) => {
   }
 });
 
+router.put("/player/volume", authenticateToken, async (req: any, res) => {
+  const { volume_percent } = req.query;
+  const token = await getValidSpotifyToken(req.user.id);
+  if (!token) return res.status(401).json({ error: "Spotify not connected" });
+  try {
+    await axios.put(`https://api.spotify.com/v1/me/player/volume?volume_percent=${volume_percent}`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(err.response?.status || 500).json({ error: "Failed to set volume" });
+  }
+});
+
 router.put("/player/shuffle", authenticateToken, async (req: any, res) => {
   const { state } = req.query;
   const token = await getValidSpotifyToken(req.user.id);

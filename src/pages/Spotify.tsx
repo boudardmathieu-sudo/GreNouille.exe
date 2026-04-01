@@ -30,7 +30,8 @@ export default function Spotify() {
   const [copied, setCopied] = useState(false);
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
 
-  const callbackUrl = `${window.location.origin}/spotify/callback`;
+  const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+  const callbackUrl = `${appUrl}/spotify/callback`;
 
   const showAction = (msg: string) => {
     setActionMessage(msg);

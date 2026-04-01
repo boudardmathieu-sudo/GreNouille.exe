@@ -39,12 +39,13 @@ export default function Signup() {
     setError("");
     setLoading(true);
     try {
+      const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { username },
-          emailRedirectTo: `${window.location.origin}/login`,
+          emailRedirectTo: `${appUrl}/login`,
         },
       });
       if (authError) throw authError;

@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { supabase } from "../lib/supabase";
 import { Loader2 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { useAuth } from "../context/AuthContext";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 
 export default function Login() {
@@ -13,6 +14,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { checkAuth } = useAuth();
   const lc = t.login;
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -25,6 +27,8 @@ export default function Login() {
         password,
       });
       if (authError) throw authError;
+      // Wait for the profile to be loaded before navigating
+      await checkAuth();
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Login failed");
