@@ -65,22 +65,23 @@ export default function Discord() {
     setTimeout(() => setToast(null), 4000);
   };
 
+  const fetchConfigured = async () => {
+    try {
+      const res = await axios.get("/api/discord/configured");
+      setConfigured(res.data.configured);
+    } catch {
+      setConfigured(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchLogs = async (channelId?: string) => {
     try {
       const url = channelId ? `/api/discord/logs?channelId=${channelId}` : "/api/discord/logs";
       const res = await axios.get(url);
       setLogs(res.data);
-      setConfigured(true);
-    } catch (err: any) {
-      const msg = err.response?.data?.error || "";
-      if (msg.includes("not configured") || err.response?.status === 500) {
-        setConfigured(false);
-      } else {
-        setConfigured(true);
-      }
-    } finally {
-      setLoading(false);
-    }
+    } catch {}
   };
 
   const fetchBotInfo = async () => {
@@ -100,9 +101,10 @@ export default function Discord() {
   };
 
   useEffect(() => {
-    fetchLogs();
+    fetchConfigured();
     fetchBotInfo();
     fetchGuilds();
+    fetchLogs();
     const interval = setInterval(fetchLogs, 20000);
     return () => clearInterval(interval);
   }, []);

@@ -22,6 +22,12 @@ function requireBot(res: any) {
   return true;
 }
 
+// ── Configuration check ───────────────────────────────────────────────────────
+
+router.get("/configured", authenticateToken, (_req, res) => {
+  res.json({ configured: !!process.env.DISCORD_BOT_TOKEN });
+});
+
 // ── Bot info & status ─────────────────────────────────────────────────────────
 
 router.get("/bot/info", authenticateToken, async (_req, res) => {

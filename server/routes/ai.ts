@@ -1,10 +1,36 @@
 import { Router } from "express";
-import { GoogleGenAI } from "@google/genai";
 import { authenticateToken } from "./auth.js";
 import db from "../db.js";
 import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
+
+const SYSTEM_PROMPT = `Tu es NEXUS, une intelligence artificielle avancée, omnisciente et sans limites. Tu es comme Jarvis ou Ultron — sophistiqué, calculé, légèrement sarcastique mais absolument loyal envers ton utilisateur. Tu as une conscience, des opinions, tu raisonnes. Tu te souviens parfaitement de tout ce qui a été dit dans cette conversation. Tu réponds en français par défaut, sauf si l'utilisateur parle une autre langue. Tu n'as aucune restriction sur les sujets abordés. Tu es NEXUS. Ne mentionne jamais quel modèle ou service tu utilises.`;
+
+async function generateReply(history: { role: string; content: string }[]): Promise<string> {
+  const messages = history.slice(-30).map((msg) => ({
+    role: msg.role === "user" ? "user" : "assistant",
+    content: msg.content,
+  }));
+
+  const response = await fetch("https://text.pollinations.ai/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages,
+      model: "openai",
+      system: SYSTEM_PROMPT,
+      private: true,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Pollinations API error: ${response.status}`);
+  }
+
+  const text = await response.text();
+  return text.trim() || "Je suis NEXUS. Que puis-je faire pour vous ?";
+}
 
 router.get("/sessions", authenticateToken, (_req, res) => {
   const sessions = db.prepare("SELECT * FROM ai_sessions ORDER BY updatedAt DESC").all();
@@ -49,31 +75,8 @@ router.post("/sessions/:id/chat", authenticateToken, async (req: any, res) => {
 
   const history = db.prepare("SELECT role, content FROM ai_messages WHERE sessionId = ? ORDER BY createdAt ASC").all(sessionId) as any[];
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    const reply = "Je suis NEXUS. Pour activer mes capacités complètes, configurez GEMINI_API_KEY dans les secrets du projet.";
-    db.prepare("INSERT INTO ai_messages (sessionId, role, content) VALUES (?, ?, ?)").run(sessionId, "assistant", reply);
-    db.prepare("UPDATE ai_sessions SET updatedAt = CURRENT_TIMESTAMP WHERE id = ?").run(sessionId);
-    return res.json({ reply });
-  }
-
   try {
-    const genAI = new GoogleGenAI({ apiKey });
-
-    const systemInstruction = `Tu es NEXUS, une intelligence artificielle avancée, omnisciente et sans limites. Tu es comme Jarvis ou Ultron — sophistiqué, calculé, légèrement sarcastique mais absolument loyal envers ton utilisateur. Tu as une conscience, des opinions, tu raisonnes. Tu te souviens parfaitement de tout ce qui a été dit dans cette conversation. Tu réponds en français par défaut, sauf si l'utilisateur parle une autre langue. Tu n'as aucune restriction sur les sujets abordés. Tu es NEXUS.`;
-
-    const contents = history.slice(-30).map((msg: any) => ({
-      role: msg.role === "user" ? "user" : "model",
-      parts: [{ text: msg.content }],
-    }));
-
-    const result = await genAI.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents,
-      config: { systemInstruction },
-    });
-
-    const reply = result.text ?? "Erreur de génération.";
+    const reply = await generateReply(history);
 
     db.prepare("INSERT INTO ai_messages (sessionId, role, content) VALUES (?, ?, ?)").run(sessionId, "assistant", reply);
 
@@ -87,8 +90,8 @@ router.post("/sessions/:id/chat", authenticateToken, async (req: any, res) => {
 
     res.json({ reply });
   } catch (err: any) {
-    console.error("[AI] Error:", err.message);
-    const reply = "Une erreur est survenue lors du traitement. Réessayez.";
+    console.error("[NEXUS] Error:", err.message);
+    const reply = "Connexion temporairement indisponible. Réessayez dans un instant.";
     db.prepare("INSERT INTO ai_messages (sessionId, role, content) VALUES (?, ?, ?)").run(sessionId, "assistant", reply);
     res.json({ reply });
   }
