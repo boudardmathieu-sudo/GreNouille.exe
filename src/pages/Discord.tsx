@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import axios from "axios";
 import {
   Send, MessageSquare, Terminal, Activity, AlertTriangle, ExternalLink,
   Bot, Wifi, Settings2, Sword, Hash, ChevronDown, Loader2, Check, X,
   ShieldAlert, UserX, VolumeX, Volume2, AlertCircle, Trash2,
-  Download, RefreshCw, Crown,
+  Download, RefreshCw, Crown, BookOpen, Smile, Shield, Megaphone, Info,
 } from "lucide-react";
 
-type Tab = "chat" | "bot" | "commands" | "warnings";
+type Tab = "chat" | "bot" | "commands" | "warnings" | "slash";
 type BotStatus = "online" | "idle" | "dnd" | "invisible";
 
 const STATUS_COLORS: Record<BotStatus, string> = {
@@ -24,6 +24,102 @@ const STATUS_LABELS: Record<BotStatus, string> = {
   invisible: "Invisible",
 };
 
+// ── Slash commands reference data ──────────────────────────────────────────────
+
+const SLASH_CATEGORIES = [
+  {
+    id: "info",
+    label: "Informations",
+    icon: Info,
+    color: "text-blue-400",
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/20",
+    commands: [
+      { name: "/ping", desc: "Latence du bot" },
+      { name: "/botinfo", desc: "Mes infos complètes" },
+      { name: "/uptime", desc: "Temps en ligne du bot" },
+      { name: "/help", desc: "Liste de toutes les commandes" },
+      { name: "/serverinfo", desc: "Infos du serveur" },
+      { name: "/userinfo", desc: "Profil complet d'un membre" },
+      { name: "/avatar", desc: "Avatar d'un membre en grand" },
+      { name: "/banner", desc: "Bannière de profil d'un membre" },
+      { name: "/rolelist", desc: "Liste des rôles du serveur" },
+      { name: "/channellist", desc: "Liste des salons" },
+      { name: "/membercount", desc: "Nombre de membres" },
+    ],
+  },
+  {
+    id: "fun",
+    label: "Fun",
+    icon: Smile,
+    color: "text-yellow-400",
+    bg: "bg-yellow-500/10",
+    border: "border-yellow-500/20",
+    commands: [
+      { name: "/coinflip", desc: "Pile ou face" },
+      { name: "/roll", desc: "Lance un dé (faces personnalisables)" },
+      { name: "/8ball", desc: "La boule magique répond" },
+      { name: "/choix", desc: "Choisit parmi plusieurs options" },
+      { name: "/pp", desc: "Mesure très scientifique 📏" },
+      { name: "/hug", desc: "Envoie un câlin à quelqu'un" },
+      { name: "/slap", desc: "Balance une claque" },
+      { name: "/iq", desc: "Calcule le QI d'un membre" },
+      { name: "/niveau", desc: "Niveau de n'importe quoi pour un membre" },
+      { name: "/mdr", desc: "T'es vraiment drôle toi ?" },
+    ],
+  },
+  {
+    id: "com",
+    label: "Communication",
+    icon: Megaphone,
+    color: "text-purple-400",
+    bg: "bg-purple-500/10",
+    border: "border-purple-500/20",
+    commands: [
+      { name: "/embed", desc: "Envoie un message embed stylé" },
+      { name: "/poll", desc: "Lance un sondage avec réactions" },
+      { name: "/announce", desc: "Annonce officielle dans un salon" },
+    ],
+  },
+  {
+    id: "mod",
+    label: "Modération",
+    icon: Shield,
+    color: "text-red-400",
+    bg: "bg-red-500/10",
+    border: "border-red-500/20",
+    commands: [
+      { name: "/ban", desc: "Bannit un membre" },
+      { name: "/kick", desc: "Expulse un membre" },
+      { name: "/mute", desc: "Timeout un membre (durée en minutes)" },
+      { name: "/unmute", desc: "Retire le timeout" },
+      { name: "/warn", desc: "Avertit et enregistre un warn" },
+      { name: "/warns", desc: "Voir les warns d'un membre" },
+      { name: "/clearwarns", desc: "Efface tous les warns d'un membre" },
+      { name: "/clear", desc: "Supprime des messages en masse (1-100)" },
+      { name: "/slowmode", desc: "Mode lent sur un salon" },
+      { name: "/lock", desc: "Verrouille un salon" },
+      { name: "/unlock", desc: "Déverrouille un salon" },
+      { name: "/role", desc: "Ajoute ou retire un rôle" },
+      { name: "/nick", desc: "Change le surnom d'un membre" },
+      { name: "/unban", desc: "Débannit via ID utilisateur" },
+      { name: "/banlist", desc: "Liste des membres bannis" },
+    ],
+  },
+  {
+    id: "owner",
+    label: "Owner uniquement",
+    icon: Crown,
+    color: "text-amber-400",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/20",
+    commands: [
+      { name: "/say", desc: "Le bot parle, ton message disparaît instantanément" },
+      { name: "/backup", desc: "Sauvegarde complète du serveur de A à Z (envoi en DM)" },
+    ],
+  },
+];
+
 export default function Discord() {
   const [activeTab, setActiveTab] = useState<Tab>("chat");
   const [message, setMessage] = useState("");
@@ -33,14 +129,12 @@ export default function Discord() {
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
-  // Bot state
   const [botInfo, setBotInfo] = useState<any>(null);
   const [botStatus, setBotStatus] = useState<BotStatus>("online");
   const [activityName, setActivityName] = useState("");
   const [settingStatus, setSettingStatus] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
 
-  // Guilds & channels
   const [guilds, setGuilds] = useState<any[]>([]);
   const [selectedGuild, setSelectedGuild] = useState("");
   const [channels, setChannels] = useState<any[]>([]);
@@ -48,13 +142,11 @@ export default function Discord() {
   const [members, setMembers] = useState<any[]>([]);
   const [selectedMember, setSelectedMember] = useState("");
 
-  // Commands
   const [cmdMessage, setCmdMessage] = useState("");
   const [cmdReason, setCmdReason] = useState("");
   const [muteDuration, setMuteDuration] = useState("10");
   const [cmdLoading, setCmdLoading] = useState<string | null>(null);
 
-  // Warnings
   const [warnings, setWarnings] = useState<any[]>([]);
   const [warnReason, setWarnReason] = useState("");
   const [warningUserId, setWarningUserId] = useState("");
@@ -154,7 +246,7 @@ export default function Discord() {
     setCmdLoading(command);
     try {
       await axios.post(`/api/discord/commands/${command}`, body);
-      showToast(`Commande ${command} exécutée avec succès !`);
+      showToast(`Commande ${command} exécutée !`);
       setCmdReason("");
     } catch (err: any) {
       showToast(err.response?.data?.error || `Erreur : ${command}`, false);
@@ -207,6 +299,7 @@ export default function Discord() {
             {[
               { name: "DISCORD_BOT_TOKEN", desc: "Token de votre bot Discord" },
               { name: "DISCORD_CHANNEL_ID", desc: "ID du canal par défaut (optionnel)" },
+              { name: "DISCORD_GUILD_ID", desc: "ID du serveur pour les slash commands rapides (optionnel)" },
             ].map((v) => (
               <div key={v.name} className="rounded-lg border border-white/5 bg-white/5 p-4">
                 <code className="text-sm font-bold text-indigo-400">{v.name}</code>
@@ -227,8 +320,9 @@ export default function Discord() {
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "chat", label: "Messages", icon: MessageSquare },
     { id: "bot", label: "Bot & Statut", icon: Bot },
-    { id: "commands", label: "Commandes", icon: Sword },
+    { id: "commands", label: "Modération", icon: Sword },
     { id: "warnings", label: "Avertissements", icon: ShieldAlert },
+    { id: "slash", label: "Commandes slash", icon: BookOpen },
   ];
 
   return (
@@ -255,7 +349,6 @@ export default function Discord() {
         </div>
       </div>
 
-      {/* Guild selector */}
       {guilds.length > 0 && (
         <div className="mb-6 flex items-center gap-3">
           <Crown className="h-4 w-4 text-yellow-400 shrink-0" />
@@ -269,7 +362,6 @@ export default function Discord() {
         </div>
       )}
 
-      {/* Tabs */}
       <div className="mb-6 flex gap-2 overflow-x-auto">
         {tabs.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -281,7 +373,7 @@ export default function Discord() {
         ))}
       </div>
 
-      {/* Chat tab */}
+      {/* ── Chat tab ──────────────────────────────────────────────────────────── */}
       {activeTab === "chat" && (
         <div className="grid gap-6 lg:grid-cols-2">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -353,10 +445,9 @@ export default function Discord() {
         </div>
       )}
 
-      {/* Bot & status tab */}
+      {/* ── Bot & status tab ──────────────────────────────────────────────────── */}
       {activeTab === "bot" && (
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Bot info */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md"
           >
@@ -398,7 +489,6 @@ export default function Discord() {
             )}
           </motion.div>
 
-          {/* Status control */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md"
           >
@@ -452,7 +542,7 @@ export default function Discord() {
 
               {!botInfo?.gatewayReady && (
                 <p className="text-xs text-yellow-400/70 text-center">
-                  ⚠️ Le changement de statut nécessite une connexion Gateway. Ajoutez DISCORD_BOT_TOKEN dans les secrets.
+                  ⚠️ Le changement de statut nécessite une connexion Gateway.
                 </p>
               )}
             </div>
@@ -460,10 +550,9 @@ export default function Discord() {
         </div>
       )}
 
-      {/* Commands tab */}
+      {/* ── Commands (moderation) tab ─────────────────────────────────────────── */}
       {activeTab === "commands" && (
         <div className="space-y-6">
-          {/* Member selector */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md"
           >
@@ -500,7 +589,7 @@ export default function Discord() {
                 <Hash className="h-5 w-5 text-[#5865F2]" />
                 <h3 className="font-semibold text-white">/say</h3>
               </div>
-              <p className="text-xs text-gray-500 mb-3">Faire dire quelque chose au bot dans un canal</p>
+              <p className="text-xs text-gray-500 mb-3">Faire parler le bot dans un canal</p>
               <select value={selectedChannel} onChange={(e) => setSelectedChannel(e.target.value)}
                 className="w-full mb-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white outline-none focus:border-[#5865F2]"
               >
@@ -634,7 +723,7 @@ export default function Discord() {
         </div>
       )}
 
-      {/* Warnings tab */}
+      {/* ── Warnings tab ──────────────────────────────────────────────────────── */}
       {activeTab === "warnings" && (
         <div className="space-y-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -683,6 +772,68 @@ export default function Discord() {
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── Slash commands reference tab ──────────────────────────────────────── */}
+      {activeTab === "slash" && (
+        <div className="space-y-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-[#5865F2]/20 bg-[#5865F2]/5 p-5"
+          >
+            <div className="flex items-start gap-3">
+              <BookOpen className="h-5 w-5 text-[#5865F2] shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-white mb-1">Toutes les commandes slash du bot</p>
+                <p className="text-xs text-gray-400">
+                  Ces commandes s'utilisent directement dans Discord avec <code className="text-[#5865F2]">/</code>.
+                  Tu peux aussi mentionner <code className="text-[#5865F2]">@GreNouille.exe</code> pour un accès rapide.
+                  Les commandes Owner (👑) sont réservées à l'ID <code className="text-amber-400">785872940347949056</code>.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="space-y-5">
+            {SLASH_CATEGORIES.map((cat, catIdx) => {
+              const Icon = cat.icon;
+              return (
+                <motion.div
+                  key={cat.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: catIdx * 0.05 }}
+                  className={`rounded-2xl border ${cat.border} ${cat.bg} p-5`}
+                >
+                  <div className="mb-4 flex items-center gap-2">
+                    <Icon className={`h-5 w-5 ${cat.color}`} />
+                    <h3 className="font-semibold text-white">{cat.label}</h3>
+                    <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-400">
+                      {cat.commands.length} commande{cat.commands.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {cat.commands.map((cmd) => (
+                      <div key={cmd.name} className="flex flex-col gap-0.5 rounded-xl bg-black/30 px-3 py-2.5 border border-white/5">
+                        <code className={`text-sm font-bold ${cat.color}`}>{cmd.name}</code>
+                        <span className="text-xs text-gray-400 leading-tight">{cmd.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="rounded-2xl border border-white/5 bg-white/3 p-5"
+          >
+            <p className="text-xs text-gray-500 text-center">
+              Total : <span className="text-white font-semibold">{SLASH_CATEGORIES.reduce((a, c) => a + c.commands.length, 0)} commandes</span> disponibles
+              · Préfixe mention : <code className="text-[#5865F2]">@GreNouille.exe</code>
+              · Préfixe slash : <code className="text-[#5865F2]">/</code>
+            </p>
+          </motion.div>
         </div>
       )}
     </div>

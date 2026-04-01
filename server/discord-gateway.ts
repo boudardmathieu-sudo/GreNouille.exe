@@ -11,12 +11,13 @@ import {
   ChannelType,
   TextChannel,
   GuildMember,
-  Collection,
 } from "discord.js";
 import db from "./db.js";
 
 let client: Client | null = null;
 let gatewayReady = false;
+
+const OWNER_ID = "785872940347949056";
 
 // ── Slash commands definitions ─────────────────────────────────────────────────
 
@@ -28,112 +29,112 @@ const slashCommands = [
 
   new SlashCommandBuilder()
     .setName("botinfo")
-    .setDescription("Affiche les informations du bot"),
+    .setDescription("Tout ce que tu veux savoir sur moi 🤖"),
 
   new SlashCommandBuilder()
     .setName("uptime")
-    .setDescription("Affiche depuis combien de temps le bot est en ligne"),
+    .setDescription("Depuis combien de temps je tourne sans m'arrêter"),
 
   new SlashCommandBuilder()
     .setName("help")
-    .setDescription("Affiche la liste de toutes les commandes disponibles"),
+    .setDescription("La liste de tout ce que je sais faire"),
 
   new SlashCommandBuilder()
     .setName("serverinfo")
-    .setDescription("Affiche les informations du serveur"),
+    .setDescription("Toutes les infos du serveur en un coup d'œil"),
 
   new SlashCommandBuilder()
     .setName("userinfo")
-    .setDescription("Affiche les informations d'un membre")
+    .setDescription("Profil complet d'un membre")
     .addUserOption((o) =>
       o.setName("membre").setDescription("Le membre à inspecter").setRequired(false)
     ),
 
   new SlashCommandBuilder()
     .setName("avatar")
-    .setDescription("Affiche l'avatar d'un membre")
+    .setDescription("Affiche l'avatar d'un membre en grand")
     .addUserOption((o) =>
       o.setName("membre").setDescription("Le membre cible").setRequired(false)
     ),
 
   new SlashCommandBuilder()
     .setName("banner")
-    .setDescription("Affiche la bannière d'un membre")
+    .setDescription("Affiche la bannière de profil d'un membre")
     .addUserOption((o) =>
       o.setName("membre").setDescription("Le membre cible").setRequired(false)
     ),
 
   new SlashCommandBuilder()
     .setName("rolelist")
-    .setDescription("Affiche la liste des rôles du serveur"),
+    .setDescription("Liste tous les rôles du serveur"),
 
   new SlashCommandBuilder()
     .setName("channellist")
-    .setDescription("Affiche la liste des salons du serveur"),
+    .setDescription("Liste les salons du serveur"),
 
   new SlashCommandBuilder()
     .setName("membercount")
-    .setDescription("Affiche le nombre de membres du serveur"),
+    .setDescription("Combien de personnes traînent sur ce serveur"),
 
   // ── Fun ──
   new SlashCommandBuilder()
     .setName("coinflip")
-    .setDescription("Pile ou face !"),
+    .setDescription("Pile ou face, le grand classique"),
 
   new SlashCommandBuilder()
     .setName("roll")
     .setDescription("Lance un dé")
     .addIntegerOption((o) =>
-      o.setName("faces").setDescription("Nombre de faces du dé (défaut: 6)").setRequired(false).setMinValue(2).setMaxValue(1000)
+      o.setName("faces").setDescription("Nombre de faces (défaut: 6)").setRequired(false).setMinValue(2).setMaxValue(1000)
     ),
 
   new SlashCommandBuilder()
     .setName("8ball")
-    .setDescription("La boule magique répond à tes questions !")
+    .setDescription("Pose une question à la boule magique 🎱")
     .addStringOption((o) =>
       o.setName("question").setDescription("Ta question").setRequired(true)
     ),
 
   new SlashCommandBuilder()
     .setName("choix")
-    .setDescription("Choisit aléatoirement parmi plusieurs options")
+    .setDescription("T'arrives pas à te décider ? Je le fais pour toi")
     .addStringOption((o) =>
-      o.setName("options").setDescription("Options séparées par des virgules (ex: oui, non, peut-être)").setRequired(true)
+      o.setName("options").setDescription("Options séparées par des virgules (ex: pizza, sushi, kebab)").setRequired(true)
     ),
 
   new SlashCommandBuilder()
     .setName("pp")
     .setDescription("Mesure quelque chose de façon très scientifique 📏")
     .addUserOption((o) =>
-      o.setName("membre").setDescription("Le membre à mesurer").setRequired(false)
+      o.setName("membre").setDescription("Le cobaye").setRequired(false)
     ),
 
   new SlashCommandBuilder()
     .setName("hug")
-    .setDescription("Envoie un câlin à quelqu'un 🤗")
+    .setDescription("Envoie un câlin 🤗")
     .addUserOption((o) =>
-      o.setName("membre").setDescription("Le membre à câliner").setRequired(true)
+      o.setName("membre").setDescription("Qui tu veux câliner").setRequired(true)
     ),
 
   new SlashCommandBuilder()
     .setName("slap")
-    .setDescription("Gifle quelqu'un 👋")
+    .setDescription("Balance une claque 👋")
     .addUserOption((o) =>
-      o.setName("membre").setDescription("Le membre à gifler").setRequired(true)
+      o.setName("membre").setDescription("La victime").setRequired(true)
     ),
 
   new SlashCommandBuilder()
     .setName("iq")
-    .setDescription("Calcule le QI d'un membre 🧠")
+    .setDescription("Calcule le QI d'un membre, la science ne ment pas 🧠")
     .addUserOption((o) =>
-      o.setName("membre").setDescription("Le membre à analyser").setRequired(false)
+      o.setName("membre").setDescription("Le cobaye").setRequired(false)
     ),
 
   new SlashCommandBuilder()
     .setName("niveau")
     .setDescription("Affiche le niveau de quelque chose pour un membre")
     .addStringOption((o) =>
-      o.setName("chose").setDescription("La chose à mesurer (ex: skill, chance, swag...)").setRequired(true)
+      o.setName("chose").setDescription("Quoi mesurer (ex: skill, courage, swag...)").setRequired(true)
     )
     .addUserOption((o) =>
       o.setName("membre").setDescription("Le membre cible").setRequired(false)
@@ -141,22 +142,21 @@ const slashCommands = [
 
   new SlashCommandBuilder()
     .setName("mdr")
-    .setDescription("Combien est-ce que t'es drôle ? 😂")
+    .setDescription("T'es vraiment drôle toi ? On va voir ça 😂")
     .addUserOption((o) =>
-      o.setName("membre").setDescription("Le membre à évaluer").setRequired(false)
+      o.setName("membre").setDescription("Le prétendu comique").setRequired(false)
     ),
 
   // ── Communication ──
   new SlashCommandBuilder()
     .setName("say")
-    .setDescription("Fait parler le bot dans un salon")
+    .setDescription("(Owner uniquement) Je répète ce que tu veux, ton message disparaît")
     .addStringOption((o) =>
-      o.setName("message").setDescription("Le message à envoyer").setRequired(true)
+      o.setName("message").setDescription("Ce que tu veux que je dise").setRequired(true)
     )
     .addChannelOption((o) =>
-      o.setName("salon").setDescription("Le salon cible (défaut: salon actuel)").setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+      o.setName("salon").setDescription("Où l'envoyer (défaut: ici)").setRequired(false)
+    ),
 
   new SlashCommandBuilder()
     .setName("embed")
@@ -165,7 +165,7 @@ const slashCommands = [
       o.setName("titre").setDescription("Le titre de l'embed").setRequired(true)
     )
     .addStringOption((o) =>
-      o.setName("description").setDescription("La description de l'embed").setRequired(true)
+      o.setName("description").setDescription("La description").setRequired(true)
     )
     .addStringOption((o) =>
       o.setName("couleur").setDescription("Couleur hex (ex: #7289DA)").setRequired(false)
@@ -174,29 +174,29 @@ const slashCommands = [
 
   new SlashCommandBuilder()
     .setName("poll")
-    .setDescription("Crée un sondage avec des réactions")
+    .setDescription("Lance un sondage avec des réactions")
     .addStringOption((o) =>
       o.setName("question").setDescription("La question du sondage").setRequired(true)
     )
     .addStringOption((o) =>
-      o.setName("option1").setDescription("Première option").setRequired(false)
+      o.setName("option1").setDescription("Option 1").setRequired(false)
     )
     .addStringOption((o) =>
-      o.setName("option2").setDescription("Deuxième option").setRequired(false)
+      o.setName("option2").setDescription("Option 2").setRequired(false)
     )
     .addStringOption((o) =>
-      o.setName("option3").setDescription("Troisième option").setRequired(false)
+      o.setName("option3").setDescription("Option 3").setRequired(false)
     )
     .addStringOption((o) =>
-      o.setName("option4").setDescription("Quatrième option").setRequired(false)
+      o.setName("option4").setDescription("Option 4").setRequired(false)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
   new SlashCommandBuilder()
     .setName("announce")
-    .setDescription("Envoie une annonce dans un salon")
+    .setDescription("Envoie une annonce officielle dans un salon")
     .addStringOption((o) =>
-      o.setName("message").setDescription("Le message d'annonce").setRequired(true)
+      o.setName("message").setDescription("Le contenu de l'annonce").setRequired(true)
     )
     .addChannelOption((o) =>
       o.setName("salon").setDescription("Le salon cible").setRequired(false)
@@ -231,7 +231,7 @@ const slashCommands = [
 
   new SlashCommandBuilder()
     .setName("mute")
-    .setDescription("Met en sourdine un membre (timeout)")
+    .setDescription("Met en sourdine un membre")
     .addUserOption((o) =>
       o.setName("membre").setDescription("Le membre à mute").setRequired(true)
     )
@@ -253,7 +253,7 @@ const slashCommands = [
 
   new SlashCommandBuilder()
     .setName("warn")
-    .setDescription("Avertit un membre")
+    .setDescription("Avertit un membre et le note dans la base de données")
     .addUserOption((o) =>
       o.setName("membre").setDescription("Le membre à avertir").setRequired(true)
     )
@@ -272,7 +272,7 @@ const slashCommands = [
 
   new SlashCommandBuilder()
     .setName("clearwarns")
-    .setDescription("Supprime les avertissements d'un membre")
+    .setDescription("Efface tous les avertissements d'un membre")
     .addUserOption((o) =>
       o.setName("membre").setDescription("Le membre cible").setRequired(true)
     )
@@ -291,7 +291,7 @@ const slashCommands = [
 
   new SlashCommandBuilder()
     .setName("slowmode")
-    .setDescription("Définit le mode lent du salon")
+    .setDescription("Active ou désactive le mode lent dans ce salon")
     .addIntegerOption((o) =>
       o.setName("secondes").setDescription("Délai en secondes (0 pour désactiver)").setRequired(true).setMinValue(0).setMaxValue(21600)
     )
@@ -299,7 +299,7 @@ const slashCommands = [
 
   new SlashCommandBuilder()
     .setName("lock")
-    .setDescription("Verrouille le salon (personne ne peut écrire)")
+    .setDescription("Verrouille un salon — personne peut plus écrire")
     .addChannelOption((o) =>
       o.setName("salon").setDescription("Le salon à verrouiller (défaut: actuel)").setRequired(false)
     )
@@ -307,7 +307,7 @@ const slashCommands = [
 
   new SlashCommandBuilder()
     .setName("unlock")
-    .setDescription("Déverrouille le salon")
+    .setDescription("Déverrouille un salon")
     .addChannelOption((o) =>
       o.setName("salon").setDescription("Le salon à déverrouiller (défaut: actuel)").setRequired(false)
     )
@@ -331,22 +331,27 @@ const slashCommands = [
       o.setName("membre").setDescription("Le membre cible").setRequired(true)
     )
     .addStringOption((o) =>
-      o.setName("surnom").setDescription("Le nouveau surnom (vide pour supprimer)").setRequired(false)
+      o.setName("surnom").setDescription("Le nouveau surnom (laisse vide pour supprimer)").setRequired(false)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageNicknames),
 
   new SlashCommandBuilder()
     .setName("unban")
-    .setDescription("Débannit un utilisateur")
+    .setDescription("Débannit quelqu'un via son ID")
     .addStringOption((o) =>
-      o.setName("userid").setDescription("L'ID de l'utilisateur à débannir").setRequired(true)
+      o.setName("userid").setDescription("L'ID de l'utilisateur").setRequired(true)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
 
   new SlashCommandBuilder()
     .setName("banlist")
-    .setDescription("Affiche la liste des membres bannis")
+    .setDescription("Voir la liste des membres bannis")
     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+
+  // ── Owner only ──
+  new SlashCommandBuilder()
+    .setName("backup")
+    .setDescription("(Owner uniquement) Sauvegarde complète du serveur de A à Z"),
 ].map((cmd) => cmd.toJSON());
 
 // ── Register slash commands ────────────────────────────────────────────────────
@@ -357,41 +362,43 @@ async function registerSlashCommands(botToken: string, clientId: string) {
   try {
     if (guildId) {
       await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: slashCommands });
-      console.log(`[Discord] Slash commands registered for guild ${guildId}`);
+      console.log(`[Discord] Slash commands enregistrées pour le serveur ${guildId}`);
     } else {
       await rest.put(Routes.applicationCommands(clientId), { body: slashCommands });
-      console.log("[Discord] Slash commands registered globally");
+      console.log("[Discord] Slash commands enregistrées globalement");
     }
   } catch (err: any) {
-    console.error("[Discord] Failed to register slash commands:", err.message);
+    console.error("[Discord] Erreur lors de l'enregistrement des slash commands:", err.message);
   }
 }
 
 // ── 8ball responses ────────────────────────────────────────────────────────────
 
 const eightBallResponses = [
-  "✅ Oui, absolument !",
-  "✅ C'est certain.",
-  "✅ Sans aucun doute.",
-  "✅ Oui, définitivement.",
-  "✅ Tu peux compter dessus.",
-  "🤷 Réponds pas claire pour l'instant.",
-  "🤷 Demande plus tard.",
-  "🤷 Mieux vaut ne pas te le dire maintenant.",
-  "🤷 Impossible de prédire pour l'instant.",
-  "❌ Ne compte pas dessus.",
-  "❌ Ma réponse est non.",
+  "✅ Ouais, clairement !",
+  "✅ C'est certain, fonce.",
+  "✅ Aucun doute là-dessus.",
+  "✅ Carrément oui.",
+  "✅ T'as ma parole.",
+  "🤷 C'est pas très clair pour l'instant...",
+  "🤷 Reviens me voir plus tard.",
+  "🤷 Mieux vaut que je la ferme sur ce coup-là.",
+  "🤷 Impossible de te répondre maintenant.",
+  "❌ Compte pas là-dessus.",
+  "❌ Nope.",
   "❌ Mes sources disent non.",
-  "❌ Les perspectives ne sont pas bonnes.",
-  "❌ Très douteux.",
+  "❌ Ça sent pas bon pour toi.",
+  "❌ Très très douteux.",
 ];
 
-// ── Handle slash commands ──────────────────────────────────────────────────────
+// ── Color parser ───────────────────────────────────────────────────────────────
 
 function parseColor(hex: string | null): number {
   if (!hex) return 0x5865f2;
   return parseInt(hex.replace("#", ""), 16) || 0x5865f2;
 }
+
+// ── Handle slash commands ──────────────────────────────────────────────────────
 
 async function handleInteraction(interaction: any) {
   if (!interaction.isChatInputCommand()) return;
@@ -399,8 +406,10 @@ async function handleInteraction(interaction: any) {
   const { commandName } = interaction;
   const guild = interaction.guild;
   const member = interaction.member as GuildMember;
+  const isOwner = interaction.user.id === OWNER_ID;
 
   try {
+
     // ── ping ──
     if (commandName === "ping") {
       const latency = client!.ws.ping;
@@ -412,7 +421,8 @@ async function handleInteraction(interaction: any) {
             .addFields(
               { name: "Latence Bot", value: `\`${latency}ms\``, inline: true },
               { name: "Latence API", value: `\`${Date.now() - interaction.createdTimestamp}ms\``, inline: true }
-            ),
+            )
+            .setFooter({ text: "Oui je suis là, t'inquiète." }),
         ],
       });
     }
@@ -427,7 +437,7 @@ async function handleInteraction(interaction: any) {
         embeds: [
           new EmbedBuilder()
             .setColor(0x5865f2)
-            .setTitle("🤖 Informations du Bot")
+            .setTitle("🤖 Mes infos")
             .setThumbnail(client!.user!.displayAvatarURL())
             .addFields(
               { name: "Nom", value: client!.user!.tag, inline: true },
@@ -437,7 +447,7 @@ async function handleInteraction(interaction: any) {
               { name: "Uptime", value: `${h}h ${m}m ${s}s`, inline: true },
               { name: "Version discord.js", value: "14.x", inline: true }
             )
-            .setFooter({ text: "Nexus Panel Bot" })
+            .setFooter({ text: "Nexus Panel — par GreNouille.exe" })
             .setTimestamp(),
         ],
       });
@@ -455,7 +465,7 @@ async function handleInteraction(interaction: any) {
           new EmbedBuilder()
             .setColor(0x00b4d8)
             .setTitle("⏱️ Uptime")
-            .setDescription(`Le bot est en ligne depuis **${days}j ${h}h ${m}m ${s}s**`),
+            .setDescription(`Je tourne sans interruption depuis **${days}j ${h}h ${m}m ${s}s** — pas mal non ?`),
         ],
       });
     }
@@ -466,26 +476,15 @@ async function handleInteraction(interaction: any) {
         embeds: [
           new EmbedBuilder()
             .setColor(0x5865f2)
-            .setTitle("📖 Commandes disponibles")
+            .setTitle("📖 Ce que je sais faire")
             .addFields(
-              {
-                name: "📊 Informations",
-                value: "`/ping` `/botinfo` `/uptime` `/serverinfo` `/userinfo` `/avatar` `/banner` `/rolelist` `/channellist` `/membercount`",
-              },
-              {
-                name: "🎉 Fun",
-                value: "`/coinflip` `/roll` `/8ball` `/choix` `/pp` `/hug` `/slap` `/iq` `/niveau` `/mdr`",
-              },
-              {
-                name: "📢 Communication",
-                value: "`/say` `/embed` `/poll` `/announce`",
-              },
-              {
-                name: "🔨 Modération",
-                value: "`/ban` `/kick` `/mute` `/unmute` `/warn` `/warns` `/clearwarns` `/clear` `/slowmode` `/lock` `/unlock` `/role` `/nick` `/unban` `/banlist`",
-              }
+              { name: "📊 Informations", value: "`/ping` `/botinfo` `/uptime` `/serverinfo` `/userinfo` `/avatar` `/banner` `/rolelist` `/channellist` `/membercount`" },
+              { name: "🎉 Fun", value: "`/coinflip` `/roll` `/8ball` `/choix` `/pp` `/hug` `/slap` `/iq` `/niveau` `/mdr`" },
+              { name: "📢 Communication", value: "`/embed` `/poll` `/announce`" },
+              { name: "🔨 Modération", value: "`/ban` `/kick` `/mute` `/unmute` `/warn` `/warns` `/clearwarns` `/clear` `/slowmode` `/lock` `/unlock` `/role` `/nick` `/unban` `/banlist`" },
+              { name: "👑 Owner uniquement", value: "`/say` `/backup`" }
             )
-            .setFooter({ text: `Mentionne-moi pour plus d'infos !` })
+            .setFooter({ text: "Tu peux aussi me mentionner pour un raccourci !" })
             .setTimestamp(),
         ],
       });
@@ -493,7 +492,7 @@ async function handleInteraction(interaction: any) {
 
     // ── serverinfo ──
     else if (commandName === "serverinfo") {
-      if (!guild) return interaction.reply({ content: "Commande uniquement disponible dans un serveur.", ephemeral: true });
+      if (!guild) return interaction.reply({ content: "Cette commande marche seulement dans un serveur.", ephemeral: true });
       const owner = await guild.fetchOwner();
       const created = Math.floor(guild.createdTimestamp / 1000);
       await interaction.reply({
@@ -504,13 +503,12 @@ async function handleInteraction(interaction: any) {
             .setThumbnail(guild.iconURL({ size: 256 }) ?? null)
             .addFields(
               { name: "ID", value: guild.id, inline: true },
-              { name: "Propriétaire", value: owner.user.tag, inline: true },
+              { name: "Proprio", value: owner.user.tag, inline: true },
               { name: "Membres", value: `${guild.memberCount}`, inline: true },
               { name: "Salons", value: `${guild.channels.cache.size}`, inline: true },
               { name: "Rôles", value: `${guild.roles.cache.size}`, inline: true },
-              { name: "Boosts", value: `${guild.premiumSubscriptionCount ?? 0}`, inline: true },
-              { name: "Créé le", value: `<t:${created}:D>`, inline: true },
-              { name: "Niveau de boost", value: `Niveau ${guild.premiumTier}`, inline: true },
+              { name: "Boosts", value: `${guild.premiumSubscriptionCount ?? 0} (Niv. ${guild.premiumTier})`, inline: true },
+              { name: "Créé le", value: `<t:${created}:D> (<t:${created}:R>)`, inline: false },
             )
             .setTimestamp(),
         ],
@@ -519,11 +517,11 @@ async function handleInteraction(interaction: any) {
 
     // ── userinfo ──
     else if (commandName === "userinfo") {
-      const target = interaction.options.getMember("membre") as GuildMember | null ?? member;
+      const target = (interaction.options.getMember("membre") as GuildMember | null) ?? member;
       const user = target.user;
       const joinedAt = target.joinedTimestamp ? Math.floor(target.joinedTimestamp / 1000) : 0;
       const createdAt = Math.floor(user.createdTimestamp / 1000);
-      const roles = target.roles.cache.filter((r) => r.id !== guild?.id).map((r) => `<@&${r.id}>`).join(", ") || "Aucun";
+      const roles = target.roles.cache.filter((r: any) => r.id !== guild?.id).map((r: any) => `<@&${r.id}>`).join(", ") || "Aucun";
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
@@ -532,10 +530,10 @@ async function handleInteraction(interaction: any) {
             .setThumbnail(user.displayAvatarURL({ size: 256 }))
             .addFields(
               { name: "ID", value: user.id, inline: true },
-              { name: "Pseudo", value: target.displayName, inline: true },
-              { name: "Bot", value: user.bot ? "Oui" : "Non", inline: true },
-              { name: "Compte créé le", value: `<t:${createdAt}:D>`, inline: false },
-              { name: "A rejoint le", value: joinedAt ? `<t:${joinedAt}:D>` : "Inconnu", inline: false },
+              { name: "Pseudo serveur", value: target.displayName, inline: true },
+              { name: "Bot ?", value: user.bot ? "Oui" : "Non", inline: true },
+              { name: "Compte créé", value: `<t:${createdAt}:D> (<t:${createdAt}:R>)`, inline: false },
+              { name: "A rejoint", value: joinedAt ? `<t:${joinedAt}:D> (<t:${joinedAt}:R>)` : "Inconnu", inline: false },
               { name: `Rôles (${target.roles.cache.size - 1})`, value: roles.length > 1024 ? roles.slice(0, 1020) + "..." : roles, inline: false },
             )
             .setTimestamp(),
@@ -560,16 +558,17 @@ async function handleInteraction(interaction: any) {
 
     // ── banner ──
     else if (commandName === "banner") {
-      const target = await (interaction.options.getUser("membre") ?? interaction.user).fetch();
-      const bannerUrl = (target as any).bannerURL?.({ size: 512 });
+      const targetUser = interaction.options.getUser("membre") ?? interaction.user;
+      const fetched = await targetUser.fetch();
+      const bannerUrl = (fetched as any).bannerURL?.({ size: 512 });
       if (!bannerUrl) {
-        return interaction.reply({ content: "Cet utilisateur n'a pas de bannière.", ephemeral: true });
+        return interaction.reply({ content: `**${targetUser.username}** a pas de bannière, dommage.`, ephemeral: true });
       }
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setColor(0x5865f2)
-            .setTitle(`🖼️ Bannière de ${target.username}`)
+            .setTitle(`🖼️ Bannière de ${targetUser.username}`)
             .setImage(bannerUrl),
         ],
       });
@@ -579,9 +578,9 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "rolelist") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const roles = guild.roles.cache
-        .filter((r) => r.id !== guild.id)
-        .sort((a, b) => b.position - a.position)
-        .map((r) => `<@&${r.id}>`)
+        .filter((r: any) => r.id !== guild.id)
+        .sort((a: any, b: any) => b.position - a.position)
+        .map((r: any) => `<@&${r.id}>`)
         .slice(0, 30)
         .join(", ");
       await interaction.reply({
@@ -597,16 +596,16 @@ async function handleInteraction(interaction: any) {
     // ── channellist ──
     else if (commandName === "channellist") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
-      const text = guild.channels.cache.filter((c) => c.type === ChannelType.GuildText).map((c) => `<#${c.id}>`).slice(0, 20).join(", ");
-      const voice = guild.channels.cache.filter((c) => c.type === ChannelType.GuildVoice).map((c) => `🔊 ${c.name}`).slice(0, 10).join(", ");
+      const text = guild.channels.cache.filter((c: any) => c.type === ChannelType.GuildText).map((c: any) => `<#${c.id}>`).slice(0, 20).join(", ");
+      const voice = guild.channels.cache.filter((c: any) => c.type === ChannelType.GuildVoice).map((c: any) => `🔊 ${c.name}`).slice(0, 10).join(", ");
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setColor(0x52b788)
             .setTitle(`📋 Salons du serveur`)
             .addFields(
-              { name: `💬 Texte (${guild.channels.cache.filter(c => c.type === ChannelType.GuildText).size})`, value: text || "Aucun" },
-              { name: `🔊 Vocal (${guild.channels.cache.filter(c => c.type === ChannelType.GuildVoice).size})`, value: voice || "Aucun" },
+              { name: `💬 Texte (${guild.channels.cache.filter((c: any) => c.type === ChannelType.GuildText).size})`, value: text || "Aucun" },
+              { name: `🔊 Vocal (${guild.channels.cache.filter((c: any) => c.type === ChannelType.GuildVoice).size})`, value: voice || "Aucun" },
             ),
         ],
       });
@@ -615,13 +614,13 @@ async function handleInteraction(interaction: any) {
     // ── membercount ──
     else if (commandName === "membercount") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
-      const bots = guild.members.cache.filter((m) => m.user.bot).size;
+      const bots = guild.members.cache.filter((m: any) => m.user.bot).size;
       const humans = guild.memberCount - bots;
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setColor(0x80b918)
-            .setTitle("👥 Membres du serveur")
+            .setTitle("👥 Y'a du monde ici !")
             .addFields(
               { name: "Total", value: `${guild.memberCount}`, inline: true },
               { name: "Humains", value: `${humans}`, inline: true },
@@ -641,7 +640,7 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "roll") {
       const faces = interaction.options.getInteger("faces") ?? 6;
       const result = Math.floor(Math.random() * faces) + 1;
-      await interaction.reply({ content: `🎲 **${interaction.user.username}** lance un dé à **${faces}** faces et obtient... **${result}** !` });
+      await interaction.reply({ content: `🎲 **${interaction.user.username}** lance un dé à **${faces}** faces et tombe sur... **${result}** !` });
     }
 
     // ── 8ball ──
@@ -652,11 +651,12 @@ async function handleInteraction(interaction: any) {
         embeds: [
           new EmbedBuilder()
             .setColor(0x2b2d31)
-            .setTitle("🎱 La Boule Magique")
+            .setTitle("🎱 La Boule Magique a parlé")
             .addFields(
-              { name: "❓ Question", value: question },
-              { name: "🔮 Réponse", value: response }
-            ),
+              { name: "❓ Ta question", value: question },
+              { name: "🔮 Ma réponse", value: response }
+            )
+            .setFooter({ text: "Je suis pas responsable des conséquences." }),
         ],
       });
     }
@@ -665,15 +665,15 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "choix") {
       const rawOptions = interaction.options.getString("options", true);
       const choices = rawOptions.split(",").map((s: string) => s.trim()).filter(Boolean);
-      if (choices.length < 2) return interaction.reply({ content: "Il faut au moins 2 options séparées par des virgules !", ephemeral: true });
+      if (choices.length < 2) return interaction.reply({ content: "Donne-moi au moins 2 options séparées par des virgules stp !", ephemeral: true });
       const chosen = choices[Math.floor(Math.random() * choices.length)];
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setColor(0xffd60a)
-            .setTitle("🎯 Je choisis...")
-            .setDescription(`**${chosen}** !`)
-            .setFooter({ text: `Options : ${choices.join(" · ")}` }),
+            .setTitle("🎯 Mon choix est fait !")
+            .setDescription(`Je vote **${chosen}** !`)
+            .setFooter({ text: `Options proposées : ${choices.join(" · ")}` }),
         ],
       });
     }
@@ -683,26 +683,32 @@ async function handleInteraction(interaction: any) {
       const target = interaction.options.getUser("membre") ?? interaction.user;
       const size = Math.floor(Math.random() * 30);
       const bar = "8" + "=".repeat(size) + "D";
-      await interaction.reply({ content: `📏 **${target.username}** : \`${bar}\` (${size} cm)` });
+      await interaction.reply({ content: `📏 **${target.username}** : \`${bar}\` *(${size} cm, c'est la science qui parle)*` });
     }
 
     // ── hug ──
     else if (commandName === "hug") {
       const target = interaction.options.getUser("membre", true);
+      if (target.id === client!.user!.id) {
+        return interaction.reply({ content: `Aww merci **${interaction.user.username}** ! 🥺 Un câlin pour moi, ça fait plaisir !` });
+      }
       await interaction.reply({ content: `🤗 **${interaction.user.username}** fait un gros câlin à **${target.username}** !` });
     }
 
     // ── slap ──
     else if (commandName === "slap") {
       const target = interaction.options.getUser("membre", true);
-      await interaction.reply({ content: `👋 **${interaction.user.username}** gifle **${target.username}** ! Aïe !` });
+      if (target.id === client!.user!.id) {
+        return interaction.reply({ content: `Hé ! Tu me touches pas toi ! 😤` });
+      }
+      await interaction.reply({ content: `👋 **${interaction.user.username}** balance une claque à **${target.username}** ! Aïe !` });
     }
 
     // ── iq ──
     else if (commandName === "iq") {
       const target = interaction.options.getUser("membre") ?? interaction.user;
       const iq = Math.floor(Math.random() * 200) + 50;
-      let comment = iq < 80 ? "🥴 Hmm..." : iq < 100 ? "😐 Dans la moyenne..." : iq < 140 ? "😎 Pas mal !" : "🧠 Génie !";
+      const comment = iq < 80 ? "🥴 Euh... intéressant." : iq < 100 ? "😐 Dans la moyenne, c'est déjà ça." : iq < 140 ? "😎 Pas mal du tout !" : "🧠 Un génie parmi nous.";
       await interaction.reply({ content: `🧠 **${target.username}** a un QI de **${iq}** — ${comment}` });
     }
 
@@ -719,15 +725,20 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "mdr") {
       const target = interaction.options.getUser("membre") ?? interaction.user;
       const pct = Math.floor(Math.random() * 101);
-      await interaction.reply({ content: `😂 **${target.username}** est drôle à **${pct}%**` });
+      const comment = pct < 20 ? "💀 Pitié non." : pct < 50 ? "😐 Bof." : pct < 80 ? "😄 Pas mal !" : "😂 MDR c'est chaud !";
+      await interaction.reply({ content: `😂 **${target.username}** est drôle à **${pct}%** — ${comment}` });
     }
 
-    // ── say ──
+    // ── say (OWNER ONLY) ──
     else if (commandName === "say") {
+      if (!isOwner) {
+        return interaction.reply({ content: "Cette commande c'est pas pour toi.", ephemeral: true });
+      }
       const message = interaction.options.getString("message", true);
       const channel = (interaction.options.getChannel("salon") ?? interaction.channel) as TextChannel;
+      await interaction.deferReply({ ephemeral: true });
       await channel.send(message);
-      await interaction.reply({ content: "✅ Message envoyé !", ephemeral: true });
+      await interaction.deleteReply();
     }
 
     // ── embed ──
@@ -745,7 +756,7 @@ async function handleInteraction(interaction: any) {
             .setTimestamp(),
         ],
       });
-      await interaction.reply({ content: "✅ Embed envoyé !", ephemeral: true });
+      await interaction.reply({ content: "✅ Envoyé !", ephemeral: true });
     }
 
     // ── poll ──
@@ -759,18 +770,15 @@ async function handleInteraction(interaction: any) {
       ].filter(Boolean) as string[];
 
       const emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"];
-      let description: string;
-      if (opts.length === 0) {
-        description = "Réagissez avec 👍 ou 👎";
-      } else {
-        description = opts.map((o, i) => `${emojis[i]} ${o}`).join("\n");
-      }
+      const description = opts.length === 0
+        ? "Réagissez avec 👍 ou 👎"
+        : opts.map((o, i) => `${emojis[i]} ${o}`).join("\n");
 
       const pollMsg = await (interaction.channel as TextChannel).send({
         embeds: [
           new EmbedBuilder()
             .setColor(0xffd60a)
-            .setTitle(`📊 Sondage : ${question}`)
+            .setTitle(`📊 ${question}`)
             .setDescription(description)
             .setFooter({ text: `Sondage lancé par ${interaction.user.tag}` })
             .setTimestamp(),
@@ -781,12 +789,10 @@ async function handleInteraction(interaction: any) {
         await pollMsg.react("👍");
         await pollMsg.react("👎");
       } else {
-        for (let i = 0; i < opts.length; i++) {
-          await pollMsg.react(emojis[i]);
-        }
+        for (let i = 0; i < opts.length; i++) await pollMsg.react(emojis[i]);
       }
 
-      await interaction.reply({ content: "✅ Sondage créé !", ephemeral: true });
+      await interaction.reply({ content: "✅ Sondage lancé !", ephemeral: true });
     }
 
     // ── announce ──
@@ -810,7 +816,7 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "ban") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const target = interaction.options.getMember("membre") as GuildMember | null;
-      if (!target) return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
+      if (!target) return interaction.reply({ content: "Ce membre est introuvable.", ephemeral: true });
       const raison = interaction.options.getString("raison") ?? "Aucune raison fournie";
       const supprimer = interaction.options.getInteger("supprimer") ?? 0;
       await guild.members.ban(target, { reason: raison, deleteMessageSeconds: supprimer * 86400 });
@@ -821,7 +827,8 @@ async function handleInteraction(interaction: any) {
             .setTitle("🔨 Banni")
             .addFields(
               { name: "Membre", value: target.user.tag, inline: true },
-              { name: "Raison", value: raison, inline: true }
+              { name: "Raison", value: raison, inline: true },
+              { name: "Sanctionné par", value: interaction.user.tag, inline: true }
             ),
         ],
       });
@@ -831,7 +838,7 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "kick") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const target = interaction.options.getMember("membre") as GuildMember | null;
-      if (!target) return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
+      if (!target) return interaction.reply({ content: "Ce membre est introuvable.", ephemeral: true });
       const raison = interaction.options.getString("raison") ?? "Aucune raison fournie";
       await target.kick(raison);
       await interaction.reply({
@@ -841,7 +848,8 @@ async function handleInteraction(interaction: any) {
             .setTitle("👢 Expulsé")
             .addFields(
               { name: "Membre", value: target.user.tag, inline: true },
-              { name: "Raison", value: raison, inline: true }
+              { name: "Raison", value: raison, inline: true },
+              { name: "Sanctionné par", value: interaction.user.tag, inline: true }
             ),
         ],
       });
@@ -851,7 +859,7 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "mute") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const target = interaction.options.getMember("membre") as GuildMember | null;
-      if (!target) return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
+      if (!target) return interaction.reply({ content: "Ce membre est introuvable.", ephemeral: true });
       const duree = interaction.options.getInteger("duree", true);
       const raison = interaction.options.getString("raison") ?? "Aucune raison fournie";
       const until = new Date(Date.now() + duree * 60 * 1000);
@@ -860,11 +868,11 @@ async function handleInteraction(interaction: any) {
         embeds: [
           new EmbedBuilder()
             .setColor(0xffa500)
-            .setTitle("🔇 Mute")
+            .setTitle("🔇 Mute appliqué")
             .addFields(
               { name: "Membre", value: target.user.tag, inline: true },
-              { name: "Durée", value: `${duree} minute(s)`, inline: true },
-              { name: "Fin du mute", value: `<t:${Math.floor(until.getTime() / 1000)}:R>`, inline: true },
+              { name: "Durée", value: `${duree} min`, inline: true },
+              { name: "Fin", value: `<t:${Math.floor(until.getTime() / 1000)}:R>`, inline: true },
               { name: "Raison", value: raison, inline: false },
             ),
         ],
@@ -875,14 +883,14 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "unmute") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const target = interaction.options.getMember("membre") as GuildMember | null;
-      if (!target) return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
+      if (!target) return interaction.reply({ content: "Ce membre est introuvable.", ephemeral: true });
       await target.timeout(null);
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setColor(0x00d166)
             .setTitle("🔊 Unmute")
-            .setDescription(`**${target.user.tag}** n'est plus en sourdine.`),
+            .setDescription(`**${target.user.tag}** peut de nouveau parler.`),
         ],
       });
     }
@@ -891,7 +899,7 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "warn") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const target = interaction.options.getMember("membre") as GuildMember | null;
-      if (!target) return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
+      if (!target) return interaction.reply({ content: "Ce membre est introuvable.", ephemeral: true });
       const raison = interaction.options.getString("raison", true);
       db.prepare(
         "INSERT INTO discord_warnings (guildId, userId, username, reason, warnedBy) VALUES (?, ?, ?, ?, ?)"
@@ -915,17 +923,17 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "warns") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const target = interaction.options.getMember("membre") as GuildMember | null;
-      if (!target) return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
+      if (!target) return interaction.reply({ content: "Ce membre est introuvable.", ephemeral: true });
       const rows = db.prepare("SELECT * FROM discord_warnings WHERE guildId = ? AND userId = ? ORDER BY createdAt DESC").all(guild.id, target.user.id) as any[];
       if (rows.length === 0) {
-        return interaction.reply({ content: `✅ **${target.user.tag}** n'a aucun avertissement.`, ephemeral: true });
+        return interaction.reply({ content: `✅ Aucun warn pour **${target.user.tag}**, il est clean.` });
       }
       const list = rows.map((w, i) => `**${i + 1}.** ${w.reason} — *par ${w.warnedBy ?? "?"}* (<t:${Math.floor(new Date(w.createdAt).getTime() / 1000)}:d>)`).join("\n");
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setColor(0xffcc00)
-            .setTitle(`⚠️ Avertissements de ${target.user.tag}`)
+            .setTitle(`⚠️ Warns de ${target.user.tag} (${rows.length})`)
             .setDescription(list.slice(0, 4096)),
         ],
       });
@@ -935,14 +943,14 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "clearwarns") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const target = interaction.options.getMember("membre") as GuildMember | null;
-      if (!target) return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
+      if (!target) return interaction.reply({ content: "Ce membre est introuvable.", ephemeral: true });
       db.prepare("DELETE FROM discord_warnings WHERE guildId = ? AND userId = ?").run(guild.id, target.user.id);
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setColor(0x00d166)
-            .setTitle("🧹 Warns supprimés")
-            .setDescription(`Les avertissements de **${target.user.tag}** ont été supprimés.`),
+            .setTitle("🧹 Warns effacés")
+            .setDescription(`Les avertissements de **${target.user.tag}** sont partis à la poubelle.`),
         ],
       });
     }
@@ -955,12 +963,10 @@ async function handleInteraction(interaction: any) {
       const channel = interaction.channel as TextChannel;
       await interaction.deferReply({ ephemeral: true });
       let messages = await channel.messages.fetch({ limit: Math.min(nombre + 1, 100) });
-      if (targetUser) {
-        messages = messages.filter((m) => m.author.id === targetUser.id);
-      }
-      const toDelete = messages.filter((m) => Date.now() - m.createdTimestamp < 14 * 24 * 60 * 60 * 1000);
+      if (targetUser) messages = messages.filter((m: any) => m.author.id === targetUser.id);
+      const toDelete = messages.filter((m: any) => Date.now() - m.createdTimestamp < 14 * 24 * 60 * 60 * 1000);
       const deleted = await channel.bulkDelete(toDelete, true);
-      await interaction.editReply({ content: `✅ **${deleted.size}** message(s) supprimé(s).` });
+      await interaction.editReply({ content: `✅ **${deleted.size}** message(s) supprimé(s), propre !` });
     }
 
     // ── slowmode ──
@@ -969,8 +975,8 @@ async function handleInteraction(interaction: any) {
       const secondes = interaction.options.getInteger("secondes", true);
       const channel = interaction.channel as TextChannel;
       await channel.setRateLimitPerUser(secondes);
-      const msg = secondes === 0 ? "Mode lent désactivé." : `Mode lent défini à **${secondes} secondes**.`;
-      await interaction.reply({ content: `⏱️ ${msg}`, ephemeral: true });
+      const msg = secondes === 0 ? "Mode lent désactivé, c'est reparti !" : `Mode lent défini à **${secondes} secondes**.`;
+      await interaction.reply({ content: `⏱️ ${msg}` });
     }
 
     // ── lock ──
@@ -978,7 +984,7 @@ async function handleInteraction(interaction: any) {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const channel = (interaction.options.getChannel("salon") ?? interaction.channel) as TextChannel;
       await channel.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: false });
-      await interaction.reply({ content: `🔒 **${channel.name}** est maintenant verrouillé.` });
+      await interaction.reply({ content: `🔒 **${channel.name}** est verrouillé. Plus personne écrit ici.` });
     }
 
     // ── unlock ──
@@ -986,7 +992,7 @@ async function handleInteraction(interaction: any) {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const channel = (interaction.options.getChannel("salon") ?? interaction.channel) as TextChannel;
       await channel.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: null });
-      await interaction.reply({ content: `🔓 **${channel.name}** est maintenant déverrouillé.` });
+      await interaction.reply({ content: `🔓 **${channel.name}** est déverrouillé. On peut parler de nouveau !` });
     }
 
     // ── role ──
@@ -997,7 +1003,7 @@ async function handleInteraction(interaction: any) {
       if (!target || !role) return interaction.reply({ content: "Membre ou rôle introuvable.", ephemeral: true });
       if (target.roles.cache.has(role.id)) {
         await target.roles.remove(role.id);
-        await interaction.reply({ content: `✅ Rôle **${role.name}** retiré de **${target.user.tag}**.` });
+        await interaction.reply({ content: `✅ Rôle **${role.name}** retiré à **${target.user.tag}**.` });
       } else {
         await target.roles.add(role.id);
         await interaction.reply({ content: `✅ Rôle **${role.name}** ajouté à **${target.user.tag}**.` });
@@ -1008,11 +1014,11 @@ async function handleInteraction(interaction: any) {
     else if (commandName === "nick") {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const target = interaction.options.getMember("membre") as GuildMember | null;
-      if (!target) return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
+      if (!target) return interaction.reply({ content: "Ce membre est introuvable.", ephemeral: true });
       const surnom = interaction.options.getString("surnom") ?? null;
       await target.setNickname(surnom);
       const msg = surnom ? `Surnom de **${target.user.tag}** changé en **${surnom}**.` : `Surnom de **${target.user.tag}** supprimé.`;
-      await interaction.reply({ content: `✅ ${msg}`, ephemeral: true });
+      await interaction.reply({ content: `✅ ${msg}` });
     }
 
     // ── unban ──
@@ -1020,7 +1026,7 @@ async function handleInteraction(interaction: any) {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const userId = interaction.options.getString("userid", true);
       await guild.members.unban(userId);
-      await interaction.reply({ content: `✅ L'utilisateur \`${userId}\` a été débanni.` });
+      await interaction.reply({ content: `✅ L'utilisateur \`${userId}\` est débanni, il peut revenir.` });
     }
 
     // ── banlist ──
@@ -1028,9 +1034,9 @@ async function handleInteraction(interaction: any) {
       if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
       const bans = await guild.bans.fetch();
       if (bans.size === 0) {
-        return interaction.reply({ content: "✅ Aucun membre banni.", ephemeral: true });
+        return interaction.reply({ content: "✅ Personne de banni ici, tout le monde est sage.", ephemeral: true });
       }
-      const list = bans.map((b) => `**${b.user.tag}** — ${b.reason ?? "Aucune raison"}`).slice(0, 20).join("\n");
+      const list = bans.map((b: any) => `**${b.user.tag}** — ${b.reason ?? "Aucune raison"}`).slice(0, 20).join("\n");
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
@@ -1042,13 +1048,107 @@ async function handleInteraction(interaction: any) {
       });
     }
 
+    // ── backup (OWNER ONLY) ──
+    else if (commandName === "backup") {
+      if (!isOwner) {
+        return interaction.reply({ content: "Cette commande est réservée au propriétaire du bot.", ephemeral: true });
+      }
+      if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
+
+      await interaction.deferReply({ ephemeral: true });
+
+      const [guildData, channelsData, rolesData, bansData, emojisData] = await Promise.all([
+        guild.fetch(),
+        guild.channels.fetch(),
+        guild.roles.fetch(),
+        guild.bans.fetch(),
+        guild.emojis.fetch(),
+      ]);
+
+      const backup = {
+        exportedAt: new Date().toISOString(),
+        exportedBy: interaction.user.tag,
+        guild: {
+          id: guildData.id,
+          name: guildData.name,
+          description: guildData.description,
+          icon: guildData.iconURL({ size: 512 }),
+          banner: guildData.bannerURL?.({ size: 512 }),
+          memberCount: guildData.memberCount,
+          verificationLevel: guildData.verificationLevel,
+          defaultMessageNotifications: guildData.defaultMessageNotifications,
+          explicitContentFilter: guildData.explicitContentFilter,
+          premiumTier: guildData.premiumTier,
+          premiumSubscriptionCount: guildData.premiumSubscriptionCount,
+          preferredLocale: guildData.preferredLocale,
+          afkTimeout: guildData.afkTimeout,
+          systemChannelId: guildData.systemChannelId,
+        },
+        roles: rolesData
+          .filter((r: any) => r.id !== guild.id)
+          .sort((a: any, b: any) => b.position - a.position)
+          .map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            color: r.color,
+            hoist: r.hoist,
+            mentionable: r.mentionable,
+            permissions: r.permissions.toArray(),
+            position: r.position,
+          })),
+        channels: channelsData
+          .filter((c: any) => c !== null)
+          .map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            type: c.type,
+            position: c.position,
+            parentId: c.parentId,
+            topic: (c as any).topic ?? null,
+            nsfw: (c as any).nsfw ?? false,
+            rateLimitPerUser: (c as any).rateLimitPerUser ?? 0,
+            userLimit: (c as any).userLimit ?? 0,
+            bitrate: (c as any).bitrate ?? null,
+            permissionOverwrites: c.permissionOverwrites?.cache?.map((perm: any) => ({
+              id: perm.id,
+              type: perm.type,
+              allow: perm.allow.toArray(),
+              deny: perm.deny.toArray(),
+            })) ?? [],
+          })),
+        bans: bansData.map((b: any) => ({
+          userId: b.user.id,
+          userTag: b.user.tag,
+          reason: b.reason,
+        })),
+        emojis: emojisData.map((e: any) => ({
+          id: e.id,
+          name: e.name,
+          animated: e.animated,
+          url: e.url,
+        })),
+      };
+
+      const jsonBuffer = Buffer.from(JSON.stringify(backup, null, 2), "utf-8");
+
+      try {
+        await interaction.user.send({
+          content: `📦 Voilà le backup complet de **${guild.name}** — garde ça au chaud !`,
+          files: [{ attachment: jsonBuffer, name: `backup-${guild.name}-${Date.now()}.json` }],
+        });
+        await interaction.editReply({ content: `✅ Backup envoyé dans tes DMs ! Vérifie tes messages privés.` });
+      } catch {
+        await interaction.editReply({ content: `❌ J'arrive pas à t'envoyer le backup en DM. Ouvre tes DMs sur ce serveur et réessaie.` });
+      }
+    }
+
   } catch (err: any) {
-    console.error(`[Discord] Error handling /${commandName}:`, err.message);
+    console.error(`[Discord] Erreur sur /${commandName}:`, err.message);
     try {
       if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: "❌ Une erreur est survenue.", ephemeral: true });
+        await interaction.followUp({ content: "❌ Une erreur est survenue, désolé.", ephemeral: true });
       } else {
-        await interaction.reply({ content: "❌ Une erreur est survenue.", ephemeral: true });
+        await interaction.reply({ content: "❌ Une erreur est survenue, désolé.", ephemeral: true });
       }
     } catch {}
   }
@@ -1061,36 +1161,42 @@ async function handleMention(message: any) {
   if (!message.mentions.has(client.user.id)) return;
   if (message.author.bot) return;
 
-  const content = message.content.replace(`<@${client.user.id}>`, "").replace(`<@!${client.user.id}>`, "").trim().toLowerCase();
+  const content = message.content
+    .replace(`<@${client.user.id}>`, "")
+    .replace(`<@!${client.user.id}>`, "")
+    .trim()
+    .toLowerCase();
 
   if (content === "" || content === "help" || content === "aide" || content === "commandes") {
     await message.reply({
       embeds: [
         new EmbedBuilder()
           .setColor(0x5865f2)
-          .setTitle("👋 Salut ! Je suis GreNouille.exe")
-          .setDescription("Voici ce que je peux faire :")
+          .setTitle("👋 Yo ! C'est moi, GreNouille.exe")
+          .setDescription("T'as besoin de moi ? Voilà ce que je sais faire :")
           .addFields(
             { name: "📊 Info", value: "`/ping` `/botinfo` `/serverinfo` `/userinfo` `/avatar` `/membercount`" },
             { name: "🎉 Fun", value: "`/coinflip` `/roll` `/8ball` `/choix` `/hug` `/slap` `/iq`" },
-            { name: "📢 Com.", value: "`/say` `/embed` `/poll` `/announce`" },
+            { name: "📢 Com.", value: "`/embed` `/poll` `/announce`" },
             { name: "🔨 Mod", value: "`/ban` `/kick` `/mute` `/warn` `/clear` `/lock`" }
           )
-          .setFooter({ text: "Utilise /help pour la liste complète !" }),
+          .setFooter({ text: "Tape /help pour la liste complète !" }),
       ],
     });
   } else if (content === "ping") {
-    await message.reply(`🏓 Pong ! Latence : **${client.ws.ping}ms**`);
-  } else if (content === "bonjour" || content === "salut" || content === "hello" || content === "coucou" || content === "yo") {
+    await message.reply(`🏓 Pong ! ${client.ws.ping}ms — je suis là !`);
+  } else if (["bonjour", "salut", "hello", "coucou", "yo", "wesh", "cc"].includes(content)) {
     const greetings = [
-      `Hey **${message.author.username}** ! 👋`,
-      `Salut **${message.author.username}** ! 🐸`,
-      `Coucou **${message.author.username}** ! ✨`,
-      `Yo **${message.author.username}** ! 😎`,
+      `Yo **${message.author.username}** ! 🐸`,
+      `Salut **${message.author.username}** ! Quoi de neuf ?`,
+      `Coucou **${message.author.username}** ! 👋`,
+      `Hey **${message.author.username}** ! Content de te voir.`,
     ];
     await message.reply(greetings[Math.floor(Math.random() * greetings.length)]);
+  } else if (content.includes("merci") || content.includes("thanks") || content.includes("thx")) {
+    await message.reply(`De rien **${message.author.username}** ! C'est mon taff 😄`);
   } else {
-    await message.reply(`Hey **${message.author.username}** ! Tape \`/help\` ou mentionne-moi avec \`help\` pour voir mes commandes. 🐸`);
+    await message.reply(`Hey **${message.author.username}** ! Tape \`/help\` pour voir ce que je sais faire. Je suis là si t'as besoin 🐸`);
   }
 }
 
@@ -1116,21 +1222,20 @@ export async function initDiscordGateway() {
 
     client.once("ready", async () => {
       gatewayReady = true;
-      console.log(`[Discord] Gateway ready — logged in as ${client!.user!.tag}`);
+      console.log(`[Discord] Gateway prêt — connecté en tant que ${client!.user!.tag}`);
       await registerSlashCommands(botToken, client!.user!.id);
     });
 
     client.on("interactionCreate", handleInteraction);
-
     client.on("messageCreate", handleMention);
 
     client.on("error", (err) => {
-      console.error("[Discord] Gateway error:", err.message);
+      console.error("[Discord] Erreur gateway:", err.message);
     });
 
     await client.login(botToken);
   } catch (err: any) {
-    console.error("[Discord] Failed to login to gateway:", err.message);
+    console.error("[Discord] Impossible de se connecter:", err.message);
     client = null;
     gatewayReady = false;
   }
@@ -1145,7 +1250,7 @@ export function isGatewayReady(): boolean {
 }
 
 export async function setBotStatus(status: PresenceStatusData, activityName?: string, activityType?: number) {
-  if (!client?.user) throw new Error("Discord client not connected");
+  if (!client?.user) throw new Error("Discord client pas connecté");
   client.user.setPresence({
     status,
     activities: activityName
