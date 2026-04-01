@@ -4,6 +4,7 @@ import { LayoutDashboard, Music, MessageSquare, LogOut, Settings, User, StickyNo
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useIsMobile } from "../hooks/useMediaQuery";
+import MobileNav from "./MobileNav";
 
 export default function Sidebar() {
   const { signOut, lock, user } = useAuth();
@@ -37,32 +38,7 @@ export default function Sidebar() {
   const initial = user?.username?.[0]?.toUpperCase();
 
   if (isMobile) {
-    return (
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#050505]/95 backdrop-blur-xl">
-        <div className="flex items-center justify-around px-2 py-2">
-          {navItems.slice(0, 5).map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors ${isActive ? "text-indigo-300" : "text-gray-500 hover:text-indigo-300"}`
-              }
-            >
-              <item.icon className="h-5 w-5 shrink-0" />
-            </NavLink>
-          ))}
-          <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors ${isActive ? "text-indigo-300" : "text-gray-500 hover:text-indigo-300"}`}>
-            <User className="h-5 w-5 shrink-0" />
-          </NavLink>
-          <button onClick={lock} className="flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-gray-500 transition-colors hover:text-yellow-400">
-            <Lock className="h-5 w-5 shrink-0" />
-          </button>
-          <button onClick={handleLogout} className="flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-gray-500 transition-colors hover:text-red-400">
-            <LogOut className="h-5 w-5 shrink-0" />
-          </button>
-        </div>
-      </nav>
-    );
+    return <MobileNav />;
   }
 
   return (
@@ -152,7 +128,6 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Lock button (primary action) */}
       <button
         onClick={lock}
         className={`group flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-3 text-sm font-medium text-gray-400 transition-colors duration-200 hover:bg-yellow-500/10 hover:text-yellow-400 mb-1`}
@@ -162,7 +137,6 @@ export default function Sidebar() {
         {!isCollapsed && <span className="whitespace-nowrap">Verrouiller</span>}
       </button>
 
-      {/* Logout button (secondary) */}
       <button
         onClick={handleLogout}
         className={`group flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-3 text-sm font-medium text-gray-600 transition-colors duration-200 hover:bg-red-500/10 hover:text-red-400`}
