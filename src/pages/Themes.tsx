@@ -4,9 +4,10 @@ import { Paintbrush, Check, Eye, ChevronDown, ChevronUp, Sparkles, X, Palette, T
 import { type SplashTheme, renderSplash } from "../components/splashscreens/renderSplash";
 import { SPLASH_KEY, SPLASH_ENABLED_KEY } from "../components/Splashscreen";
 import {
-  logoColors, LogoStyle, loadLogoStyle, saveLogoStyle,
+  logoColors, loadLogoStyle, saveLogoStyle,
   getLetterStyle, getContainerShape, useLogoColor, useLogoStyle,
 } from "../components/Sidebar";
+import type { LogoStyle } from "../components/Sidebar";
 
 const SETTINGS_KEY = "nexus-settings";
 

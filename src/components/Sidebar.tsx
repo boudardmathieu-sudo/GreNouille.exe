@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Music, MessageSquare, LogOut, Settings, User, StickyNote,
   ChevronLeft, ChevronRight, Shield, Bookmark, CheckSquare, Lock, Bot, Check,
-  Clock, Wifi, WifiOff, Globe, Palette, BarChart3, Zap, X, LayoutGrid, Paintbrush,
+  Wifi, WifiOff, Globe, Palette, BarChart3, Zap, X, LayoutGrid, Paintbrush,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../context/AuthContext";
@@ -11,81 +11,25 @@ import { useLanguage } from "../context/LanguageContext";
 import { useIsMobile } from "../hooks/useMediaQuery";
 import { useSpotify } from "../context/SpotifyContext";
 import MobileNav from "./MobileNav";
+import {
+  logoColors, DEFAULT_LOGO_STYLE,
+  getLetterStyle, getContainerShape, getLogoStyle,
+} from "../lib/theme";
+import type { LogoColor, LogoStyle } from "../lib/theme";
 
 const LOGO_COLOR_KEY = "nexus-logo-color";
 const LOGO_STYLE_KEY = "nexus-logo-style";
 
-export const logoColors = [
-  { id: "indigo", label: "Indigo", bg: "rgba(79,110,247,0.22)", border: "rgba(79,110,247,0.4)", glow: "rgba(79,110,247,0.5)", text: "rgba(100,130,255,0.9)", hex: "#4f6ef7" },
-  { id: "violet", label: "Violet", bg: "rgba(139,92,246,0.22)", border: "rgba(139,92,246,0.4)", glow: "rgba(139,92,246,0.5)", text: "rgba(167,139,250,0.9)", hex: "#8b5cf6" },
-  { id: "cyan", label: "Cyan", bg: "rgba(34,211,238,0.18)", border: "rgba(34,211,238,0.4)", glow: "rgba(34,211,238,0.5)", text: "rgba(34,211,238,0.9)", hex: "#22d3ee" },
-  { id: "emerald", label: "Émeraude", bg: "rgba(16,185,129,0.18)", border: "rgba(16,185,129,0.4)", glow: "rgba(16,185,129,0.5)", text: "rgba(16,185,129,0.9)", hex: "#10b981" },
-  { id: "rose", label: "Rose", bg: "rgba(244,63,94,0.18)", border: "rgba(244,63,94,0.4)", glow: "rgba(244,63,94,0.5)", text: "rgba(244,63,94,0.9)", hex: "#f43f5e" },
-  { id: "amber", label: "Ambre", bg: "rgba(245,158,11,0.18)", border: "rgba(245,158,11,0.4)", glow: "rgba(245,158,11,0.5)", text: "rgba(245,158,11,0.9)", hex: "#f59e0b" },
-  { id: "white", label: "Blanc", bg: "rgba(255,255,255,0.1)", border: "rgba(255,255,255,0.3)", glow: "rgba(255,255,255,0.4)", text: "rgba(255,255,255,0.9)", hex: "#ffffff" },
-  { id: "pink", label: "Pink", bg: "rgba(236,72,153,0.18)", border: "rgba(236,72,153,0.4)", glow: "rgba(236,72,153,0.5)", text: "rgba(236,72,153,0.9)", hex: "#ec4899" },
-  { id: "orange", label: "Orange", bg: "rgba(249,115,22,0.18)", border: "rgba(249,115,22,0.4)", glow: "rgba(249,115,22,0.5)", text: "rgba(249,115,22,0.9)", hex: "#f97316" },
-  { id: "lime", label: "Lime", bg: "rgba(132,204,22,0.18)", border: "rgba(132,204,22,0.4)", glow: "rgba(132,204,22,0.5)", text: "rgba(132,204,22,0.9)", hex: "#84cc16" },
-  { id: "teal", label: "Teal", bg: "rgba(20,184,166,0.18)", border: "rgba(20,184,166,0.4)", glow: "rgba(20,184,166,0.5)", text: "rgba(20,184,166,0.9)", hex: "#14b8a6" },
-  { id: "gold", label: "Or", bg: "rgba(212,175,55,0.18)", border: "rgba(212,175,55,0.4)", glow: "rgba(212,175,55,0.5)", text: "rgba(212,175,55,0.9)", hex: "#d4af37" },
-  { id: "red", label: "Rouge", bg: "rgba(239,68,68,0.18)", border: "rgba(239,68,68,0.4)", glow: "rgba(239,68,68,0.5)", text: "rgba(239,68,68,0.9)", hex: "#ef4444" },
-  { id: "sky", label: "Ciel", bg: "rgba(14,165,233,0.18)", border: "rgba(14,165,233,0.4)", glow: "rgba(14,165,233,0.5)", text: "rgba(14,165,233,0.9)", hex: "#0ea5e9" },
-];
-
-export interface LogoStyle {
-  font: "system" | "serif" | "mono" | "impact" | "italic" | "display";
-  effect: "glow" | "outline" | "neon" | "gradient" | "plain" | "hologram";
-  shape: "rounded" | "square" | "circle";
-}
-
-const DEFAULT_LOGO_STYLE: LogoStyle = { font: "system", effect: "glow", shape: "rounded" };
+export { logoColors, getLetterStyle, getContainerShape };
+export type { LogoStyle };
 
 export function loadLogoStyle(): LogoStyle {
-  try { return { ...DEFAULT_LOGO_STYLE, ...JSON.parse(localStorage.getItem(LOGO_STYLE_KEY) || "{}") }; }
-  catch { return DEFAULT_LOGO_STYLE; }
+  return getLogoStyle();
 }
 
 export function saveLogoStyle(style: LogoStyle) {
   localStorage.setItem(LOGO_STYLE_KEY, JSON.stringify(style));
   window.dispatchEvent(new Event("nexus-logo-style-change"));
-}
-
-export function getLetterStyle(color: typeof logoColors[0], style: LogoStyle): React.CSSProperties {
-  const fonts: Record<string, React.CSSProperties> = {
-    system: { fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, fontStyle: "normal" },
-    serif: { fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 700, fontStyle: "normal" },
-    mono: { fontFamily: "'Courier New', Consolas, 'Liberation Mono', monospace", fontWeight: 700, fontStyle: "normal" },
-    impact: { fontFamily: "Impact, 'Arial Black', sans-serif", fontWeight: 400, fontStyle: "normal" },
-    italic: { fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, fontStyle: "italic" },
-    display: { fontFamily: "'Trebuchet MS', Candara, sans-serif", fontWeight: 700, fontStyle: "normal" },
-  };
-  const fontStyle = fonts[style.font] || fonts.system;
-  const base: React.CSSProperties = { ...fontStyle, letterSpacing: "-0.04em" };
-
-  switch (style.effect) {
-    case "glow":
-      return { ...base, color: "#ffffff", textShadow: `0 0 10px ${color.text}, 0 0 20px ${color.glow}` };
-    case "outline":
-      return { ...base, color: "transparent", WebkitTextStroke: `1.5px ${color.hex}` };
-    case "neon":
-      return { ...base, color: color.hex, textShadow: `0 0 4px ${color.hex}, 0 0 10px ${color.hex}, 0 0 22px ${color.glow}` };
-    case "gradient":
-      return { ...base, background: `linear-gradient(135deg, #ffffff 0%, ${color.hex} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" };
-    case "plain":
-      return { ...base, color: color.text };
-    case "hologram":
-      return { ...base, color: "#ffffff", textShadow: `-1px 0 ${color.hex}, 1px 0 rgba(0,240,255,0.8), 0 0 12px ${color.glow}` };
-    default:
-      return { ...base, color: "#ffffff", textShadow: `0 0 10px ${color.text}, 0 0 20px ${color.glow}` };
-  }
-}
-
-export function getContainerShape(style: LogoStyle): string {
-  switch (style.shape) {
-    case "square": return "rounded-sm";
-    case "circle": return "rounded-full";
-    default: return "rounded-lg";
-  }
 }
 
 export function useLogoColor() {
@@ -99,9 +43,9 @@ export function useLogoColor() {
 }
 
 export function useLogoStyle() {
-  const [style, setStyle] = useState<LogoStyle>(loadLogoStyle);
+  const [style, setStyle] = useState<LogoStyle>(getLogoStyle);
   useEffect(() => {
-    const h = () => setStyle(loadLogoStyle());
+    const h = () => setStyle(getLogoStyle());
     window.addEventListener("nexus-logo-style-change", h);
     return () => window.removeEventListener("nexus-logo-style-change", h);
   }, []);
@@ -118,37 +62,37 @@ function useClock() {
 }
 
 const FONT_OPTIONS: { id: LogoStyle["font"]; label: string }[] = [
-  { id: "system", label: "Défaut" },
-  { id: "serif", label: "Serif" },
-  { id: "mono", label: "Mono" },
-  { id: "impact", label: "Impact" },
-  { id: "italic", label: "Italic" },
+  { id: "system",  label: "Défaut"  },
+  { id: "serif",   label: "Serif"   },
+  { id: "mono",    label: "Mono"    },
+  { id: "impact",  label: "Impact"  },
+  { id: "italic",  label: "Italic"  },
   { id: "display", label: "Display" },
 ];
 
 const EFFECT_OPTIONS: { id: LogoStyle["effect"]; label: string }[] = [
-  { id: "glow", label: "Glow" },
-  { id: "neon", label: "Neon" },
-  { id: "gradient", label: "Gradient" },
-  { id: "outline", label: "Outline" },
-  { id: "hologram", label: "Holo" },
-  { id: "plain", label: "Plain" },
+  { id: "glow",     label: "Glow"    },
+  { id: "neon",     label: "Neon"    },
+  { id: "gradient", label: "Gradient"},
+  { id: "outline",  label: "Outline" },
+  { id: "hologram", label: "Holo"    },
+  { id: "plain",    label: "Plain"   },
 ];
 
-const SHAPE_OPTIONS: { id: LogoStyle["shape"]; label: string; preview: string }[] = [
-  { id: "rounded", label: "Arrondi", preview: "rounded-lg" },
-  { id: "square", label: "Carré", preview: "rounded-sm" },
-  { id: "circle", label: "Cercle", preview: "rounded-full" },
+const SHAPE_OPTIONS: { id: LogoStyle["shape"]; label: string }[] = [
+  { id: "rounded", label: "Arrondi" },
+  { id: "square",  label: "Carré"   },
+  { id: "circle",  label: "Cercle"  },
 ];
 
-function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logoColor: typeof logoColors[0]; logoStyle: LogoStyle }) {
+function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logoColor: LogoColor; logoStyle: LogoStyle }) {
   const { user, lock, signOut } = useAuth();
   const { t, lang, toggle } = useLanguage();
   const navigate = useNavigate();
   const time = useClock();
   const { currentTrack, isPlaying } = useSpotify();
   const [selectedColor, setSelectedColor] = useState(() => localStorage.getItem(LOGO_COLOR_KEY) || "indigo");
-  const [selectedStyle, setSelectedStyle] = useState<LogoStyle>(loadLogoStyle);
+  const [selectedStyle, setSelectedStyle] = useState<LogoStyle>(getLogoStyle);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -171,28 +115,28 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
     saveLogoStyle(next);
   };
 
-  const hours = time.getHours().toString().padStart(2, "0");
+  const hours   = time.getHours().toString().padStart(2, "0");
   const minutes = time.getMinutes().toString().padStart(2, "0");
   const seconds = time.getSeconds().toString().padStart(2, "0");
   const dateStr = time.toLocaleDateString(lang === "FR" ? "fr-FR" : "en-US", { weekday: "long", day: "numeric", month: "long" });
 
   const previewColor = logoColors.find(c => c.id === selectedColor) || logoColors[0];
-  const letterCSS = getLetterStyle(previewColor, selectedStyle);
-  const shapeClass = getContainerShape(selectedStyle);
+  const letterCSS    = getLetterStyle(previewColor, selectedStyle);
+  const shapeClass   = getContainerShape(selectedStyle);
 
   const quickLinks = [
-    { to: "/profile", icon: User, label: "Profil" },
-    { to: "/settings", icon: Settings, label: "Paramètres" },
-    { to: "/themes", icon: Paintbrush, label: "Thèmes" },
-    { to: "/security", icon: Shield, label: "Sécurité" },
+    { to: "/profile",  icon: User,       label: "Profil"      },
+    { to: "/settings", icon: Settings,   label: "Paramètres"  },
+    { to: "/themes",   icon: Paintbrush, label: "Thèmes"      },
+    { to: "/security", icon: Shield,     label: "Sécurité"    },
   ];
 
   return (
     <motion.div ref={ref}
       initial={{ opacity: 0, scale: 0.92, x: -10 }} animate={{ opacity: 1, scale: 1, x: 0 }} exit={{ opacity: 0, scale: 0.92, x: -10 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
-      className="absolute left-16 top-0 z-[200] rounded-2xl border border-white/12 shadow-2xl overflow-hidden"
-      style={{ background: "rgba(6,6,18,0.98)", backdropFilter: "blur(28px)", width: 300 }}
+      className="absolute left-16 top-0 z-[200] rounded-2xl border border-white/12 shadow-2xl"
+      style={{ background: "rgba(6,6,18,0.98)", backdropFilter: "blur(28px)", width: 300, maxHeight: "calc(100vh - 32px)", overflowY: "auto" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
@@ -234,13 +178,11 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
             <p className="text-xs font-semibold text-white truncate">{user.username}</p>
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
           </div>
-          <div className="flex items-center gap-1">
-            {user.hasSpotify ? (
-              <span title="Spotify connecté"><Wifi className="h-3 w-3 text-emerald-400" /></span>
-            ) : (
-              <span title="Spotify non connecté"><WifiOff className="h-3 w-3 text-gray-600" /></span>
-            )}
-          </div>
+          {user.hasSpotify ? (
+            <span title="Spotify connecté"><Wifi className="h-3 w-3 text-emerald-400" /></span>
+          ) : (
+            <span title="Spotify non connecté"><WifiOff className="h-3 w-3 text-gray-600" /></span>
+          )}
         </div>
       )}
 
@@ -284,12 +226,12 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
           <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Police</p>
           <div className="grid grid-cols-3 gap-1">
             {FONT_OPTIONS.map((f) => {
-              const previewStyle = getLetterStyle(previewColor, { ...selectedStyle, font: f.id });
+              const fStyle = getLetterStyle(previewColor, { ...selectedStyle, font: f.id });
               return (
                 <button key={f.id} onClick={() => updateStyle({ font: f.id })}
                   className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 px-1 border transition-all ${selectedStyle.font === f.id ? "border-white/30 bg-white/10" : "border-white/5 bg-white/3 hover:bg-white/8"}`}
                 >
-                  <span style={{ ...previewStyle, fontSize: 13 }} className="leading-none">N</span>
+                  <span style={{ ...fStyle, fontSize: 13 }} className="leading-none">N</span>
                   <span className="text-[8px] text-gray-500">{f.label}</span>
                 </button>
               );
@@ -302,14 +244,14 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
           <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Effet</p>
           <div className="grid grid-cols-3 gap-1">
             {EFFECT_OPTIONS.map((e) => {
-              const previewStyle = getLetterStyle(previewColor, { ...selectedStyle, effect: e.id });
+              const eStyle = getLetterStyle(previewColor, { ...selectedStyle, effect: e.id });
               const containerStyle = { background: previewColor.bg, border: `1px solid ${previewColor.border}`, boxShadow: `0 0 8px ${previewColor.glow}30` };
               return (
                 <button key={e.id} onClick={() => updateStyle({ effect: e.id })}
                   className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 px-1 border transition-all ${selectedStyle.effect === e.id ? "border-white/30 bg-white/10" : "border-white/5 bg-white/3 hover:bg-white/8"}`}
                 >
                   <div className={`h-5 w-5 ${getContainerShape(selectedStyle)} flex items-center justify-center`} style={containerStyle}>
-                    <span style={{ ...previewStyle, fontSize: 10 }} className="leading-none">N</span>
+                    <span style={{ ...eStyle, fontSize: 10 }} className="leading-none">N</span>
                   </div>
                   <span className="text-[8px] text-gray-500">{e.label}</span>
                 </button>
@@ -323,12 +265,12 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
           <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Forme</p>
           <div className="grid grid-cols-3 gap-1">
             {SHAPE_OPTIONS.map((s) => {
-              const shapePreview = getContainerShape({ ...selectedStyle, shape: s.id });
+              const sp = getContainerShape({ ...selectedStyle, shape: s.id });
               return (
                 <button key={s.id} onClick={() => updateStyle({ shape: s.id })}
                   className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 px-1 border transition-all ${selectedStyle.shape === s.id ? "border-white/30 bg-white/10" : "border-white/5 bg-white/3 hover:bg-white/8"}`}
                 >
-                  <div className={`h-5 w-5 ${shapePreview} flex items-center justify-center`}
+                  <div className={`h-5 w-5 ${sp} flex items-center justify-center`}
                     style={{ background: previewColor.bg, border: `1px solid ${previewColor.border}` }}
                   >
                     <span style={{ ...letterCSS, fontSize: 10 }} className="leading-none">N</span>
@@ -392,9 +334,9 @@ export default function Sidebar() {
   const { signOut, lock, user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [isHovered, setIsHovered] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
-  const [showHub, setShowHub] = useState(false);
+  const [isHovered, setIsHovered]   = useState(false);
+  const [isPinned, setIsPinned]     = useState(false);
+  const [showHub, setShowHub]       = useState(false);
   const isMobile = useIsMobile();
   const logoColor = useLogoColor();
   const logoStyle = useLogoStyle();
@@ -406,26 +348,26 @@ export default function Sidebar() {
     navigate("/login");
   };
 
-  const letterCSS = getLetterStyle(logoColor, logoStyle);
+  const letterCSS  = getLetterStyle(logoColor, logoStyle);
   const shapeClass = getContainerShape(logoStyle);
 
   const navItems = [
     { to: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
-    { to: "/ai", icon: Bot, label: "NEXUS AI" },
-    { to: "/spotify", icon: Music, label: t.nav.spotify },
-    { to: "/discord", icon: MessageSquare, label: t.nav.discord },
-    { to: "/analytics", icon: StickyNote, label: t.nav.analytics },
-    { to: "/security", icon: Shield, label: t.nav.security },
-    { to: "/database", icon: Bookmark, label: t.nav.database },
-    { to: "/logs", icon: CheckSquare, label: t.nav.logs },
-    { to: "/widgets", icon: LayoutGrid, label: t.nav.widgets },
-    { to: "/themes", icon: Paintbrush, label: t.nav.themes },
-    { to: "/profile", icon: User, label: t.nav.profile },
-    { to: "/settings", icon: Settings, label: t.nav.settings },
+    { to: "/ai",        icon: Bot,             label: "NEXUS AI"       },
+    { to: "/spotify",   icon: Music,           label: t.nav.spotify    },
+    { to: "/discord",   icon: MessageSquare,   label: t.nav.discord    },
+    { to: "/analytics", icon: StickyNote,      label: t.nav.analytics  },
+    { to: "/security",  icon: Shield,          label: t.nav.security   },
+    { to: "/database",  icon: Bookmark,        label: t.nav.database   },
+    { to: "/logs",      icon: CheckSquare,     label: t.nav.logs       },
+    { to: "/widgets",   icon: LayoutGrid,      label: t.nav.widgets    },
+    { to: "/themes",    icon: Paintbrush,      label: t.nav.themes     },
+    { to: "/profile",   icon: User,            label: t.nav.profile    },
+    { to: "/settings",  icon: Settings,        label: t.nav.settings   },
   ];
 
   const avatarUrl = (user as any)?.avatarUrl;
-  const initial = user?.username?.[0]?.toUpperCase();
+  const initial   = user?.username?.[0]?.toUpperCase();
 
   if (isMobile) return <MobileNav />;
 
@@ -434,15 +376,17 @@ export default function Sidebar() {
       style={{ width: isCollapsed ? 80 : 256 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="relative flex h-screen flex-col border-r border-white/10 bg-[#050505] p-4 z-50 transition-[width] duration-200 ease-in-out shrink-0"
+      className="relative flex h-screen flex-col overflow-hidden border-r border-white/10 bg-[#050505] z-50 transition-[width] duration-200 ease-in-out shrink-0"
     >
+      {/* Pin toggle */}
       <button onClick={() => setIsPinned(!isPinned)}
         className="absolute -right-3 top-8 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-[#1a1a1a] text-white hover:bg-white/20 transition-colors duration-200"
       >
         {isPinned ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
       </button>
 
-      <div className={`mb-8 flex items-center ${isCollapsed ? "justify-center" : "gap-3"} px-2 mt-4`}>
+      {/* Logo header */}
+      <div className={`flex-shrink-0 flex items-center ${isCollapsed ? "justify-center" : "gap-3"} px-4 pt-5 pb-4`}>
         <div className="relative">
           <AnimatePresence>
             {showHub && <NexusHub onClose={() => setShowHub(false)} logoColor={logoColor} logoStyle={logoStyle} />}
@@ -466,55 +410,61 @@ export default function Sidebar() {
         )}
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+      {/* Nav — flex-1 + min-h-0 allows proper scrolling */}
+      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 pb-2 space-y-0.5 custom-scrollbar">
         {navItems.map((item) => (
           <NavLink key={item.to} to={item.to}
             className={({ isActive }) =>
-              `group relative flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
-                isActive ? "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20" : "text-gray-400 hover:bg-white/5 hover:text-indigo-300"
+              `group relative flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
+                isActive
+                  ? "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20"
+                  : "text-gray-400 hover:bg-white/5 hover:text-indigo-300 border border-transparent"
               }`
             }
             title={isCollapsed ? item.label : undefined}
           >
-            <item.icon className="relative z-10 h-5 w-5 shrink-0" />
-            {!isCollapsed && <span className="relative z-10 whitespace-nowrap">{item.label}</span>}
+            <item.icon className="h-5 w-5 shrink-0" />
+            {!isCollapsed && <span className="whitespace-nowrap">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
-      {!isCollapsed && user && (
-        <div className="mb-2 mt-2 flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 px-3 py-2">
-          <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden border border-white/10">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-            ) : (
-              <div className="h-full w-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-                <span className="text-xs font-bold text-white">{initial}</span>
-              </div>
-            )}
+      {/* Bottom section — always sticks to bottom */}
+      <div className="flex-shrink-0 px-2 pt-2 pb-3 border-t border-white/5">
+        {!isCollapsed && user && (
+          <div className="mb-2 flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 px-3 py-2">
+            <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden border border-white/10">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                  <span className="text-xs font-bold text-white">{initial}</span>
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-white truncate">{user.username}</p>
+              <p className="text-xs text-gray-500 truncate">{user.email}</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">{user.username}</p>
-            <p className="text-xs text-gray-500 truncate">{user.email}</p>
-          </div>
-        </div>
-      )}
+        )}
 
-      <button onClick={lock}
-        className={`group flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-3 text-sm font-medium text-gray-400 transition-colors duration-200 hover:bg-yellow-500/10 hover:text-yellow-400 mb-1`}
-        title={isCollapsed ? "Verrouiller" : undefined}
-      >
-        <Lock className="h-5 w-5 shrink-0" />
-        {!isCollapsed && <span className="whitespace-nowrap">Verrouiller</span>}
-      </button>
+        <button onClick={lock}
+          className={`w-full flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-yellow-500/10 hover:text-yellow-400 mb-0.5`}
+          title={isCollapsed ? "Verrouiller" : undefined}
+        >
+          <Lock className="h-5 w-5 shrink-0" />
+          {!isCollapsed && <span className="whitespace-nowrap">Verrouiller</span>}
+        </button>
 
-      <button onClick={handleLogout}
-        className={`group flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-3 text-sm font-medium text-gray-600 transition-colors duration-200 hover:bg-red-500/10 hover:text-red-400`}
-        title={isCollapsed ? t.nav.logout : undefined}
-      >
-        <LogOut className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isCollapsed ? "" : "group-hover:-translate-x-1"}`} />
-        {!isCollapsed && <span className="whitespace-nowrap">{t.nav.logout}</span>}
-      </button>
+        <button onClick={handleLogout}
+          className={`w-full flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-red-500/10 hover:text-red-400`}
+          title={isCollapsed ? t.nav.logout : undefined}
+        >
+          <LogOut className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isCollapsed ? "" : "group-hover:-translate-x-1"}`} />
+          {!isCollapsed && <span className="whitespace-nowrap">{t.nav.logout}</span>}
+        </button>
+      </div>
     </div>
   );
 }
