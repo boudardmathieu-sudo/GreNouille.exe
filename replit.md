@@ -57,6 +57,14 @@ The app also uses Supabase for authentication:
 
 Both Supabase clients are lazily initialized — the app starts without them, but auth features require them to be configured via Replit Secrets.
 
+## Version 1.2.0 Changes
+- **Logo styles:** Added font (system, serif, mono, impact, italic, display), visual effect (glow, neon, gradient, outline, hologram, plain), and shape (rounded, square, circle) customization. Stored in `localStorage` under `nexus-logo-style`. Exposed via `useLogoStyle()` hook.
+- **14 logo colors:** Extended from 7 to 14 colors (added pink, orange, lime, teal, gold, red, sky).
+- **New nav categories:** Added **Thèmes** (`/themes`) and **Widgets** (`/widgets`) pages.
+- **Themes page** (`src/pages/Themes.tsx`): Consolidates logo customization (color + style), startup animations, and appearance settings (moved from Settings).
+- **Widgets page** (`src/pages/Widgets.tsx`): Live clock, calendar, Spotify mini-player, system stats, and quote widgets. Widget visibility stored in `localStorage`.
+- **Settings page** simplified: Removed animation/appearance sections (now in Themes). Added a link to the Themes page.
+
 ## Key Notes
 - The `authenticateToken` middleware lives in `server/middleware/auth.ts` (extracted to avoid circular dependency between `auth.ts` routes and `logs.ts`)
 - SQLite database is used via `better-sqlite3`

@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Music, MessageSquare, LogOut, Settings, User, StickyNote,
   ChevronLeft, ChevronRight, Shield, Bookmark, CheckSquare, Lock, Bot, Check,
-  Clock, Wifi, WifiOff, Globe, Palette, BarChart3, Zap, X,
+  Clock, Wifi, WifiOff, Globe, Palette, BarChart3, Zap, X, LayoutGrid, Paintbrush,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../context/AuthContext";
@@ -13,16 +13,80 @@ import { useSpotify } from "../context/SpotifyContext";
 import MobileNav from "./MobileNav";
 
 const LOGO_COLOR_KEY = "nexus-logo-color";
+const LOGO_STYLE_KEY = "nexus-logo-style";
 
-const logoColors = [
+export const logoColors = [
   { id: "indigo", label: "Indigo", bg: "rgba(79,110,247,0.22)", border: "rgba(79,110,247,0.4)", glow: "rgba(79,110,247,0.5)", text: "rgba(100,130,255,0.9)", hex: "#4f6ef7" },
   { id: "violet", label: "Violet", bg: "rgba(139,92,246,0.22)", border: "rgba(139,92,246,0.4)", glow: "rgba(139,92,246,0.5)", text: "rgba(167,139,250,0.9)", hex: "#8b5cf6" },
   { id: "cyan", label: "Cyan", bg: "rgba(34,211,238,0.18)", border: "rgba(34,211,238,0.4)", glow: "rgba(34,211,238,0.5)", text: "rgba(34,211,238,0.9)", hex: "#22d3ee" },
-  { id: "emerald", label: "Emerald", bg: "rgba(16,185,129,0.18)", border: "rgba(16,185,129,0.4)", glow: "rgba(16,185,129,0.5)", text: "rgba(16,185,129,0.9)", hex: "#10b981" },
+  { id: "emerald", label: "Émeraude", bg: "rgba(16,185,129,0.18)", border: "rgba(16,185,129,0.4)", glow: "rgba(16,185,129,0.5)", text: "rgba(16,185,129,0.9)", hex: "#10b981" },
   { id: "rose", label: "Rose", bg: "rgba(244,63,94,0.18)", border: "rgba(244,63,94,0.4)", glow: "rgba(244,63,94,0.5)", text: "rgba(244,63,94,0.9)", hex: "#f43f5e" },
   { id: "amber", label: "Ambre", bg: "rgba(245,158,11,0.18)", border: "rgba(245,158,11,0.4)", glow: "rgba(245,158,11,0.5)", text: "rgba(245,158,11,0.9)", hex: "#f59e0b" },
   { id: "white", label: "Blanc", bg: "rgba(255,255,255,0.1)", border: "rgba(255,255,255,0.3)", glow: "rgba(255,255,255,0.4)", text: "rgba(255,255,255,0.9)", hex: "#ffffff" },
+  { id: "pink", label: "Pink", bg: "rgba(236,72,153,0.18)", border: "rgba(236,72,153,0.4)", glow: "rgba(236,72,153,0.5)", text: "rgba(236,72,153,0.9)", hex: "#ec4899" },
+  { id: "orange", label: "Orange", bg: "rgba(249,115,22,0.18)", border: "rgba(249,115,22,0.4)", glow: "rgba(249,115,22,0.5)", text: "rgba(249,115,22,0.9)", hex: "#f97316" },
+  { id: "lime", label: "Lime", bg: "rgba(132,204,22,0.18)", border: "rgba(132,204,22,0.4)", glow: "rgba(132,204,22,0.5)", text: "rgba(132,204,22,0.9)", hex: "#84cc16" },
+  { id: "teal", label: "Teal", bg: "rgba(20,184,166,0.18)", border: "rgba(20,184,166,0.4)", glow: "rgba(20,184,166,0.5)", text: "rgba(20,184,166,0.9)", hex: "#14b8a6" },
+  { id: "gold", label: "Or", bg: "rgba(212,175,55,0.18)", border: "rgba(212,175,55,0.4)", glow: "rgba(212,175,55,0.5)", text: "rgba(212,175,55,0.9)", hex: "#d4af37" },
+  { id: "red", label: "Rouge", bg: "rgba(239,68,68,0.18)", border: "rgba(239,68,68,0.4)", glow: "rgba(239,68,68,0.5)", text: "rgba(239,68,68,0.9)", hex: "#ef4444" },
+  { id: "sky", label: "Ciel", bg: "rgba(14,165,233,0.18)", border: "rgba(14,165,233,0.4)", glow: "rgba(14,165,233,0.5)", text: "rgba(14,165,233,0.9)", hex: "#0ea5e9" },
 ];
+
+export interface LogoStyle {
+  font: "system" | "serif" | "mono" | "impact" | "italic" | "display";
+  effect: "glow" | "outline" | "neon" | "gradient" | "plain" | "hologram";
+  shape: "rounded" | "square" | "circle";
+}
+
+const DEFAULT_LOGO_STYLE: LogoStyle = { font: "system", effect: "glow", shape: "rounded" };
+
+export function loadLogoStyle(): LogoStyle {
+  try { return { ...DEFAULT_LOGO_STYLE, ...JSON.parse(localStorage.getItem(LOGO_STYLE_KEY) || "{}") }; }
+  catch { return DEFAULT_LOGO_STYLE; }
+}
+
+export function saveLogoStyle(style: LogoStyle) {
+  localStorage.setItem(LOGO_STYLE_KEY, JSON.stringify(style));
+  window.dispatchEvent(new Event("nexus-logo-style-change"));
+}
+
+export function getLetterStyle(color: typeof logoColors[0], style: LogoStyle): React.CSSProperties {
+  const fonts: Record<string, React.CSSProperties> = {
+    system: { fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, fontStyle: "normal" },
+    serif: { fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 700, fontStyle: "normal" },
+    mono: { fontFamily: "'Courier New', Consolas, 'Liberation Mono', monospace", fontWeight: 700, fontStyle: "normal" },
+    impact: { fontFamily: "Impact, 'Arial Black', sans-serif", fontWeight: 400, fontStyle: "normal" },
+    italic: { fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, fontStyle: "italic" },
+    display: { fontFamily: "'Trebuchet MS', Candara, sans-serif", fontWeight: 700, fontStyle: "normal" },
+  };
+  const fontStyle = fonts[style.font] || fonts.system;
+  const base: React.CSSProperties = { ...fontStyle, letterSpacing: "-0.04em" };
+
+  switch (style.effect) {
+    case "glow":
+      return { ...base, color: "#ffffff", textShadow: `0 0 10px ${color.text}, 0 0 20px ${color.glow}` };
+    case "outline":
+      return { ...base, color: "transparent", WebkitTextStroke: `1.5px ${color.hex}` };
+    case "neon":
+      return { ...base, color: color.hex, textShadow: `0 0 4px ${color.hex}, 0 0 10px ${color.hex}, 0 0 22px ${color.glow}` };
+    case "gradient":
+      return { ...base, background: `linear-gradient(135deg, #ffffff 0%, ${color.hex} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" };
+    case "plain":
+      return { ...base, color: color.text };
+    case "hologram":
+      return { ...base, color: "#ffffff", textShadow: `-1px 0 ${color.hex}, 1px 0 rgba(0,240,255,0.8), 0 0 12px ${color.glow}` };
+    default:
+      return { ...base, color: "#ffffff", textShadow: `0 0 10px ${color.text}, 0 0 20px ${color.glow}` };
+  }
+}
+
+export function getContainerShape(style: LogoStyle): string {
+  switch (style.shape) {
+    case "square": return "rounded-sm";
+    case "circle": return "rounded-full";
+    default: return "rounded-lg";
+  }
+}
 
 export function useLogoColor() {
   const [colorId, setColorId] = useState(() => localStorage.getItem(LOGO_COLOR_KEY) || "indigo");
@@ -34,6 +98,16 @@ export function useLogoColor() {
   return logoColors.find((c) => c.id === colorId) || logoColors[0];
 }
 
+export function useLogoStyle() {
+  const [style, setStyle] = useState<LogoStyle>(loadLogoStyle);
+  useEffect(() => {
+    const h = () => setStyle(loadLogoStyle());
+    window.addEventListener("nexus-logo-style-change", h);
+    return () => window.removeEventListener("nexus-logo-style-change", h);
+  }, []);
+  return style;
+}
+
 function useClock() {
   const [time, setTime] = useState(new Date());
   useEffect(() => {
@@ -43,13 +117,38 @@ function useClock() {
   return time;
 }
 
-function NexusHub({ onClose, logoColor }: { onClose: () => void; logoColor: typeof logoColors[0] }) {
+const FONT_OPTIONS: { id: LogoStyle["font"]; label: string }[] = [
+  { id: "system", label: "Défaut" },
+  { id: "serif", label: "Serif" },
+  { id: "mono", label: "Mono" },
+  { id: "impact", label: "Impact" },
+  { id: "italic", label: "Italic" },
+  { id: "display", label: "Display" },
+];
+
+const EFFECT_OPTIONS: { id: LogoStyle["effect"]; label: string }[] = [
+  { id: "glow", label: "Glow" },
+  { id: "neon", label: "Neon" },
+  { id: "gradient", label: "Gradient" },
+  { id: "outline", label: "Outline" },
+  { id: "hologram", label: "Holo" },
+  { id: "plain", label: "Plain" },
+];
+
+const SHAPE_OPTIONS: { id: LogoStyle["shape"]; label: string; preview: string }[] = [
+  { id: "rounded", label: "Arrondi", preview: "rounded-lg" },
+  { id: "square", label: "Carré", preview: "rounded-sm" },
+  { id: "circle", label: "Cercle", preview: "rounded-full" },
+];
+
+function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logoColor: typeof logoColors[0]; logoStyle: LogoStyle }) {
   const { user, lock, signOut } = useAuth();
   const { t, lang, toggle } = useLanguage();
   const navigate = useNavigate();
   const time = useClock();
   const { currentTrack, isPlaying } = useSpotify();
   const [selectedColor, setSelectedColor] = useState(() => localStorage.getItem(LOGO_COLOR_KEY) || "indigo");
+  const [selectedStyle, setSelectedStyle] = useState<LogoStyle>(loadLogoStyle);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,15 +165,25 @@ function NexusHub({ onClose, logoColor }: { onClose: () => void; logoColor: type
     window.dispatchEvent(new Event("nexus-logo-color-change"));
   };
 
+  const updateStyle = (partial: Partial<LogoStyle>) => {
+    const next = { ...selectedStyle, ...partial };
+    setSelectedStyle(next);
+    saveLogoStyle(next);
+  };
+
   const hours = time.getHours().toString().padStart(2, "0");
   const minutes = time.getMinutes().toString().padStart(2, "0");
   const seconds = time.getSeconds().toString().padStart(2, "0");
   const dateStr = time.toLocaleDateString(lang === "FR" ? "fr-FR" : "en-US", { weekday: "long", day: "numeric", month: "long" });
 
+  const previewColor = logoColors.find(c => c.id === selectedColor) || logoColors[0];
+  const letterCSS = getLetterStyle(previewColor, selectedStyle);
+  const shapeClass = getContainerShape(selectedStyle);
+
   const quickLinks = [
     { to: "/profile", icon: User, label: "Profil" },
     { to: "/settings", icon: Settings, label: "Paramètres" },
-    { to: "/analytics", icon: BarChart3, label: "Analytics" },
+    { to: "/themes", icon: Paintbrush, label: "Thèmes" },
     { to: "/security", icon: Shield, label: "Sécurité" },
   ];
 
@@ -83,14 +192,16 @@ function NexusHub({ onClose, logoColor }: { onClose: () => void; logoColor: type
       initial={{ opacity: 0, scale: 0.92, x: -10 }} animate={{ opacity: 1, scale: 1, x: 0 }} exit={{ opacity: 0, scale: 0.92, x: -10 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
       className="absolute left-16 top-0 z-[200] rounded-2xl border border-white/12 shadow-2xl overflow-hidden"
-      style={{ background: "rgba(6,6,18,0.98)", backdropFilter: "blur(28px)", width: 280 }}
+      style={{ background: "rgba(6,6,18,0.98)", backdropFilter: "blur(28px)", width: 300 }}
     >
-      {/* Header: close */}
+      {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-md flex items-center justify-center text-sm font-black text-white"
-            style={{ background: logoColor.bg, border: `1px solid ${logoColor.border}`, boxShadow: `0 0 10px ${logoColor.glow}40` }}
-          >N</div>
+          <div className={`h-6 w-6 ${shapeClass} flex items-center justify-center text-sm shrink-0`}
+            style={{ background: previewColor.bg, border: `1px solid ${previewColor.border}`, boxShadow: `0 0 10px ${previewColor.glow}40` }}
+          >
+            <span style={{ ...letterCSS, fontSize: 11 }}>N</span>
+          </div>
           <span className="text-sm font-bold text-white">Nexus Hub</span>
         </div>
         <button onClick={onClose} className="text-gray-600 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10">
@@ -147,20 +258,86 @@ function NexusHub({ onClose, logoColor }: { onClose: () => void; logoColor: type
         </div>
       )}
 
-      {/* Color picker */}
-      <div className="mx-4 mb-3">
-        <p className="text-[10px] text-gray-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-          <Palette className="h-3 w-3" /> Couleur du logo
+      {/* Logo customization */}
+      <div className="mx-4 mb-3 space-y-3">
+        <p className="text-[10px] text-gray-600 uppercase tracking-widest flex items-center gap-1.5">
+          <Palette className="h-3 w-3" /> Personnalisation du logo
         </p>
-        <div className="grid grid-cols-7 gap-1.5">
-          {logoColors.map((c) => (
-            <button key={c.id} onClick={() => pickColor(c.id)} title={c.label}
-              className="relative h-7 w-7 rounded-lg flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
-              style={{ background: c.bg, border: `1px solid ${selectedColor === c.id ? c.border : "rgba(255,255,255,0.08)"}`, boxShadow: selectedColor === c.id ? `0 0 10px ${c.glow}` : "none" }}
-            >
-              {selectedColor === c.id && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
-            </button>
-          ))}
+
+        {/* Color */}
+        <div>
+          <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Couleur</p>
+          <div className="grid grid-cols-7 gap-1">
+            {logoColors.slice(0, 14).map((c) => (
+              <button key={c.id} onClick={() => pickColor(c.id)} title={c.label}
+                className="relative h-6 w-full rounded-md flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+                style={{ background: c.bg, border: `1px solid ${selectedColor === c.id ? c.border : "rgba(255,255,255,0.06)"}`, boxShadow: selectedColor === c.id ? `0 0 8px ${c.glow}` : "none" }}
+              >
+                {selectedColor === c.id && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Font */}
+        <div>
+          <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Police</p>
+          <div className="grid grid-cols-3 gap-1">
+            {FONT_OPTIONS.map((f) => {
+              const previewStyle = getLetterStyle(previewColor, { ...selectedStyle, font: f.id });
+              return (
+                <button key={f.id} onClick={() => updateStyle({ font: f.id })}
+                  className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 px-1 border transition-all ${selectedStyle.font === f.id ? "border-white/30 bg-white/10" : "border-white/5 bg-white/3 hover:bg-white/8"}`}
+                >
+                  <span style={{ ...previewStyle, fontSize: 13 }} className="leading-none">N</span>
+                  <span className="text-[8px] text-gray-500">{f.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Effect */}
+        <div>
+          <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Effet</p>
+          <div className="grid grid-cols-3 gap-1">
+            {EFFECT_OPTIONS.map((e) => {
+              const previewStyle = getLetterStyle(previewColor, { ...selectedStyle, effect: e.id });
+              const containerStyle = { background: previewColor.bg, border: `1px solid ${previewColor.border}`, boxShadow: `0 0 8px ${previewColor.glow}30` };
+              return (
+                <button key={e.id} onClick={() => updateStyle({ effect: e.id })}
+                  className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 px-1 border transition-all ${selectedStyle.effect === e.id ? "border-white/30 bg-white/10" : "border-white/5 bg-white/3 hover:bg-white/8"}`}
+                >
+                  <div className={`h-5 w-5 ${getContainerShape(selectedStyle)} flex items-center justify-center`} style={containerStyle}>
+                    <span style={{ ...previewStyle, fontSize: 10 }} className="leading-none">N</span>
+                  </div>
+                  <span className="text-[8px] text-gray-500">{e.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Shape */}
+        <div>
+          <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Forme</p>
+          <div className="grid grid-cols-3 gap-1">
+            {SHAPE_OPTIONS.map((s) => {
+              const shapePreview = getContainerShape({ ...selectedStyle, shape: s.id });
+              return (
+                <button key={s.id} onClick={() => updateStyle({ shape: s.id })}
+                  className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 px-1 border transition-all ${selectedStyle.shape === s.id ? "border-white/30 bg-white/10" : "border-white/5 bg-white/3 hover:bg-white/8"}`}
+                >
+                  <div className={`h-5 w-5 ${shapePreview} flex items-center justify-center`}
+                    style={{ background: previewColor.bg, border: `1px solid ${previewColor.border}` }}
+                  >
+                    <span style={{ ...letterCSS, fontSize: 10 }} className="leading-none">N</span>
+                  </div>
+                  <span className="text-[8px] text-gray-500">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -220,6 +397,7 @@ export default function Sidebar() {
   const [showHub, setShowHub] = useState(false);
   const isMobile = useIsMobile();
   const logoColor = useLogoColor();
+  const logoStyle = useLogoStyle();
 
   const isCollapsed = !isPinned && !isHovered;
 
@@ -227,6 +405,9 @@ export default function Sidebar() {
     await signOut();
     navigate("/login");
   };
+
+  const letterCSS = getLetterStyle(logoColor, logoStyle);
+  const shapeClass = getContainerShape(logoStyle);
 
   const navItems = [
     { to: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
@@ -237,6 +418,8 @@ export default function Sidebar() {
     { to: "/security", icon: Shield, label: t.nav.security },
     { to: "/database", icon: Bookmark, label: t.nav.database },
     { to: "/logs", icon: CheckSquare, label: t.nav.logs },
+    { to: "/widgets", icon: LayoutGrid, label: t.nav.widgets },
+    { to: "/themes", icon: Paintbrush, label: t.nav.themes },
     { to: "/profile", icon: User, label: t.nav.profile },
     { to: "/settings", icon: Settings, label: t.nav.settings },
   ];
@@ -259,23 +442,21 @@ export default function Sidebar() {
         {isPinned ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
       </button>
 
-      <div className={`mb-12 flex items-center ${isCollapsed ? "justify-center" : "gap-3"} px-2 mt-4`}>
+      <div className={`mb-8 flex items-center ${isCollapsed ? "justify-center" : "gap-3"} px-2 mt-4`}>
         <div className="relative">
           <AnimatePresence>
-            {showHub && <NexusHub onClose={() => setShowHub(false)} logoColor={logoColor} />}
+            {showHub && <NexusHub onClose={() => setShowHub(false)} logoColor={logoColor} logoStyle={logoStyle} />}
           </AnimatePresence>
           <button onClick={() => setShowHub(!showHub)}
             title="Nexus Hub"
-            className="flex shrink-0 h-8 w-8 items-center justify-center rounded-lg transition-transform hover:scale-110 active:scale-95"
+            className={`flex shrink-0 h-8 w-8 items-center justify-center transition-transform hover:scale-110 active:scale-95 ${shapeClass}`}
             style={{
               background: `linear-gradient(145deg, ${logoColor.bg} 0%, rgba(0,0,0,0.1) 100%)`,
               border: `1px solid ${logoColor.border}`,
               boxShadow: `0 0 0 1px ${logoColor.bg}, 0 0 14px ${logoColor.glow}40, inset 0 1px 0 rgba(255,255,255,0.15)`,
             }}
           >
-            <span className="text-sm font-black select-none leading-none"
-              style={{ color: "#ffffff", textShadow: `0 0 10px ${logoColor.text}, 0 0 20px ${logoColor.glow}`, letterSpacing: "-0.04em", fontFamily: "system-ui, sans-serif" }}
-            >N</span>
+            <span className="text-sm select-none leading-none" style={letterCSS}>N</span>
           </button>
         </div>
         {!isCollapsed && (
@@ -285,11 +466,11 @@ export default function Sidebar() {
         )}
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1.5">
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
         {navItems.map((item) => (
           <NavLink key={item.to} to={item.to}
             className={({ isActive }) =>
-              `group relative flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-3 text-sm font-medium transition-colors duration-200 ${
+              `group relative flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
                 isActive ? "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20" : "text-gray-400 hover:bg-white/5 hover:text-indigo-300"
               }`
             }
@@ -302,7 +483,7 @@ export default function Sidebar() {
       </nav>
 
       {!isCollapsed && user && (
-        <div className="mb-2 flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 px-3 py-2">
+        <div className="mb-2 mt-2 flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 px-3 py-2">
           <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden border border-white/10">
             {avatarUrl ? (
               <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
