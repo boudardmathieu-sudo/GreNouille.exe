@@ -1,95 +1,41 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
-const EMBERS = Array.from({ length: 40 }, (_, i) => ({
+const EMBERS = Array.from({ length: 50 }, (_, i) => ({
   id: i,
-  x: 20 + Math.random() * 60,
-  delay: Math.random() * 3.0,
-  duration: 1.6 + Math.random() * 2.8,
-  size: 1.2 + Math.random() * 4.2,
-  drift: (Math.random() - 0.5) * 100,
-  color: Math.random() > 0.6 ? "#ffdd00" : Math.random() > 0.3 ? "#ff8c00" : "#ff4400",
+  x: 15 + Math.random() * 70,
+  delay: Math.random() * 4,
+  duration: 2 + Math.random() * 3,
+  size: 1 + Math.random() * 3.5,
+  drift: (Math.random() - 0.5) * 120,
+  color: Math.random() > 0.55
+    ? "#ffee00"
+    : Math.random() > 0.4
+    ? "#ffaa00"
+    : "#ff5500",
+  startY: Math.random() * 30,
 }));
 
-function FireCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const W = (canvas.width = 340);
-    const H = (canvas.height = 220);
-    const buf = new Uint8Array(W * H);
-
-    const palette: [number, number, number][] = [];
-    for (let i = 0; i < 256; i++) {
-      const r = Math.min(255, i * 3);
-      const g = Math.max(0, Math.min(255, i * 2.2 - 130));
-      const b = i > 200 ? Math.min(255, (i - 200) * 5) : 0;
-      palette.push([r, g, b]);
-    }
-
-    const draw = () => {
-      for (let x = 0; x < W; x++) {
-        const hot = Math.random() > 0.28;
-        buf[(H - 1) * W + x] = hot ? 185 + Math.random() * 70 : Math.random() * 40;
-      }
-      for (let y = 0; y < H - 1; y++) {
-        for (let x = 0; x < W; x++) {
-          const s =
-            buf[(y + 1) * W + ((x - 1 + W) % W)] +
-            buf[(y + 1) * W + x] +
-            buf[(y + 1) * W + ((x + 1) % W)] +
-            buf[Math.min(H - 1, y + 2) * W + x];
-          buf[y * W + x] = Math.max(0, Math.floor(s / 4) - 1);
-        }
-      }
-
-      const img = ctx.createImageData(W, H);
-      for (let i = 0; i < W * H; i++) {
-        const c = palette[buf[i]];
-        img.data[i * 4] = c[0];
-        img.data[i * 4 + 1] = c[1];
-        img.data[i * 4 + 2] = c[2];
-        img.data[i * 4 + 3] = Math.min(255, buf[i] * 2.2);
-      }
-      ctx.putImageData(img, 0, 0);
-    };
-
-    const id = setInterval(draw, 35);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: "absolute",
-        bottom: "16%",
-        left: "50%",
-        transform: "translateX(-50%) scaleX(2.6) scaleY(1.6)",
-        opacity: 0.9,
-        imageRendering: "pixelated",
-        width: 340,
-        height: 220,
-        mixBlendMode: "screen",
-      }}
-    />
-  );
-}
+const FLAME_BLOBS = [
+  { w: "80%",  h: "52%", left: "10%",  bot: "-5%", blur: 60, col: "rgba(180,20,0,0.85)",    dur: 1.8, dX: 1,  dY: 6  },
+  { w: "65%",  h: "60%", left: "18%",  bot: "-8%", blur: 45, col: "rgba(230,50,0,0.8)",     dur: 1.4, dX: 2,  dY: 8  },
+  { w: "50%",  h: "65%", left: "25%",  bot: "-6%", blur: 35, col: "rgba(255,100,0,0.75)",   dur: 1.1, dX: 3,  dY: 10 },
+  { w: "40%",  h: "62%", left: "30%",  bot: "-4%", blur: 28, col: "rgba(255,150,0,0.7)",    dur: 0.9, dX: 4,  dY: 12 },
+  { w: "30%",  h: "55%", left: "35%",  bot: "-2%", blur: 20, col: "rgba(255,200,30,0.65)",  dur: 0.75,dX: 5,  dY: 14 },
+  { w: "20%",  h: "48%", left: "40%",  bot: "0%",  blur: 14, col: "rgba(255,235,80,0.55)",  dur: 0.6, dX: 3,  dY: 16 },
+  { w: "12%",  h: "40%", left: "44%",  bot: "2%",  blur: 10, col: "rgba(255,255,180,0.45)", dur: 0.5, dX: 2,  dY: 18 },
+];
 
 export default function SplashFire({ visible }: { visible: boolean }) {
-  const [showText, setShowText] = useState(false);
+  const [phase, setPhase] = useState<"ignite" | "burn" | "text">("ignite");
   const hasRun = useRef(false);
 
   useEffect(() => {
     if (!visible || hasRun.current) return;
     hasRun.current = true;
-    const t = setTimeout(() => setShowText(true), 220);
-    return () => clearTimeout(t);
+    const t1 = setTimeout(() => setPhase("burn"), 350);
+    const t2 = setTimeout(() => setPhase("text"), 750);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [visible]);
 
   return (
@@ -99,37 +45,83 @@ export default function SplashFire({ visible }: { visible: boolean }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.35 }}
           className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
-          style={{ background: "radial-gradient(ellipse 70% 60% at 50% 85%, #150200, #080100 60%, #000)" }}
+          style={{ background: "#060000" }}
         >
-          {/* Animated fire base glow */}
+          {/* Deep ambient base */}
           <motion.div
             className="absolute inset-0 pointer-events-none"
             animate={{
               background: [
-                "radial-gradient(ellipse 60% 42% at 50% 85%, rgba(255,55,0,0.42) 0%, rgba(160,15,0,0.14) 55%, transparent 74%)",
-                "radial-gradient(ellipse 68% 50% at 50% 85%, rgba(255,100,0,0.58) 0%, rgba(210,30,0,0.22) 55%, transparent 74%)",
-                "radial-gradient(ellipse 58% 40% at 50% 85%, rgba(255,55,0,0.42) 0%, rgba(160,15,0,0.14) 55%, transparent 74%)",
+                "radial-gradient(ellipse 70% 55% at 50% 90%, rgba(200,30,0,0.55) 0%, rgba(100,5,0,0.25) 45%, transparent 70%)",
+                "radial-gradient(ellipse 80% 65% at 50% 90%, rgba(240,60,0,0.7) 0%, rgba(140,10,0,0.32) 45%, transparent 70%)",
+                "radial-gradient(ellipse 70% 55% at 50% 90%, rgba(200,30,0,0.55) 0%, rgba(100,5,0,0.25) 45%, transparent 70%)",
               ],
             }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
           />
 
-          {/* Secondary upper glow */}
+          {/* Layered CSS flame blobs */}
+          {FLAME_BLOBS.map((b, i) => (
+            <motion.div
+              key={i}
+              className="absolute pointer-events-none"
+              style={{
+                width: b.w,
+                height: b.h,
+                left: b.left,
+                bottom: b.bot,
+                background: `radial-gradient(ellipse 50% 80% at 50% 100%, ${b.col}, transparent 70%)`,
+                filter: `blur(${b.blur}px)`,
+                mixBlendMode: "screen",
+              }}
+              animate={{
+                scaleX: [1, 1 + b.dX * 0.015, 1 - b.dX * 0.01, 1],
+                scaleY: [1, 1 - b.dY * 0.01, 1 + b.dY * 0.008, 1],
+                y: [0, -b.dY, b.dY * 0.5, 0],
+              }}
+              transition={{
+                duration: b.dur,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: i * 0.07,
+              }}
+            />
+          ))}
+
+          {/* Sharp inner flame core */}
           <motion.div
-            className="absolute inset-0 pointer-events-none"
-            animate={{
-              background: [
-                "radial-gradient(ellipse 35% 28% at 50% 55%, rgba(255,130,0,0.16) 0%, transparent 65%)",
-                "radial-gradient(ellipse 40% 34% at 50% 52%, rgba(255,200,0,0.22) 0%, transparent 65%)",
-                "radial-gradient(ellipse 35% 28% at 50% 55%, rgba(255,130,0,0.16) 0%, transparent 65%)",
-              ],
+            className="absolute pointer-events-none"
+            style={{
+              width: "22%",
+              height: "45%",
+              left: "39%",
+              bottom: "8%",
+              background: "radial-gradient(ellipse 40% 70% at 50% 100%, rgba(255,255,220,0.9) 0%, rgba(255,220,60,0.7) 25%, rgba(255,160,0,0.4) 55%, transparent 78%)",
+              filter: "blur(8px)",
+              mixBlendMode: "screen",
             }}
-            transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+            animate={{
+              scaleX: [1, 1.08, 0.94, 1],
+              scaleY: [1, 0.96, 1.04, 1],
+              y: [0, -12, 6, 0],
+            }}
+            transition={{ duration: 0.55, repeat: Infinity, ease: "easeInOut" }}
           />
 
-          <FireCanvas />
+          {/* Heat distortion haze */}
+          <motion.div
+            className="absolute inset-x-0 pointer-events-none"
+            style={{
+              bottom: "20%",
+              height: "30%",
+              background: "linear-gradient(to top, rgba(255,80,0,0.04) 0%, transparent 100%)",
+              filter: "blur(2px)",
+            }}
+            animate={{ opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
+          />
 
           {/* Embers */}
           {EMBERS.map((e) => (
@@ -140,61 +132,93 @@ export default function SplashFire({ visible }: { visible: boolean }) {
                 width: e.size,
                 height: e.size,
                 left: `${e.x}%`,
-                bottom: "22%",
+                bottom: `${20 + e.startY}%`,
                 background: e.color,
-                boxShadow: `0 0 ${e.size * 3}px ${e.color}`,
+                boxShadow: `0 0 ${e.size * 3.5}px ${e.color}`,
               }}
               animate={{
-                y: [0, -(110 + Math.random() * 180)],
+                y: [0, -(150 + Math.random() * 200)],
                 x: [0, e.drift],
-                opacity: [0, 0.9, 0.7, 0],
-                scale: [1, 0.6, 0.2, 0],
+                opacity: [0, 1, 0.8, 0],
+                scale: [1, 0.7, 0.3, 0],
               }}
               transition={{
                 duration: e.duration,
                 repeat: Infinity,
                 delay: e.delay,
-                ease: "easeOut",
+                ease: [0.4, 0, 0.6, 1],
+              }}
+            />
+          ))}
+
+          {/* Smoke wisps */}
+          {[0, 1, 2, 3].map((i) => (
+            <motion.div
+              key={`smoke-${i}`}
+              className="absolute pointer-events-none"
+              style={{
+                width: 80 + i * 40,
+                height: 80 + i * 40,
+                left: `${30 + i * 10}%`,
+                top: "5%",
+                borderRadius: "50%",
+                background: "rgba(25,10,5,0.2)",
+                filter: "blur(22px)",
+              }}
+              animate={{
+                y: [0, -50, 0],
+                x: [(i % 2 === 0 ? -1 : 1) * 15, (i % 2 === 0 ? 1 : -1) * 15, (i % 2 === 0 ? -1 : 1) * 15],
+                opacity: [0, 0.5, 0],
+                scale: [0.7, 1.3, 0.7],
+              }}
+              transition={{
+                duration: 3.5 + i * 0.6,
+                repeat: Infinity,
+                delay: i * 0.9,
+                ease: "easeInOut",
               }}
             />
           ))}
 
           {/* NEXUS text */}
           <AnimatePresence>
-            {showText && (
+            {phase === "text" && (
               <motion.div
-                className="relative z-10 flex flex-col items-center gap-3"
-                initial={{ opacity: 0, scale: 0.75, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+                className="relative z-10 flex flex-col items-center"
+                style={{ marginTop: "-5vh" }}
+                initial={{ opacity: 0, y: 30, scale: 0.85 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               >
                 <motion.h1
-                  className="text-8xl font-black tracking-wider select-none"
+                  className="font-black select-none"
                   style={{
+                    fontSize: "clamp(64px, 12vw, 110px)",
                     fontFamily: "'Arial Black', Impact, sans-serif",
-                    background: "linear-gradient(180deg, #fff8c0 0%, #ffdd00 18%, #ff9500 48%, #cc2500 88%, #7a0000 100%)",
+                    letterSpacing: "0.1em",
+                    background: "linear-gradient(180deg, #ffffff 0%, #ffeeaa 12%, #ffcc00 28%, #ff8800 52%, #dd2200 80%, #880000 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
-                    letterSpacing: "0.08em",
+                    lineHeight: 1,
                   }}
                   animate={{
                     filter: [
-                      "drop-shadow(0 0 12px rgba(255,120,0,0.9)) drop-shadow(0 0 30px rgba(255,50,0,0.6))",
-                      "drop-shadow(0 0 22px rgba(255,200,0,1)) drop-shadow(0 0 55px rgba(255,100,0,0.8))",
-                      "drop-shadow(0 0 12px rgba(255,120,0,0.9)) drop-shadow(0 0 30px rgba(255,50,0,0.6))",
+                      "drop-shadow(0 0 8px rgba(255,140,0,1)) drop-shadow(0 0 25px rgba(255,60,0,0.7)) drop-shadow(0 0 60px rgba(200,20,0,0.4))",
+                      "drop-shadow(0 0 18px rgba(255,220,0,1)) drop-shadow(0 0 45px rgba(255,100,0,0.9)) drop-shadow(0 0 90px rgba(255,40,0,0.5))",
+                      "drop-shadow(0 0 8px rgba(255,140,0,1)) drop-shadow(0 0 25px rgba(255,60,0,0.7)) drop-shadow(0 0 60px rgba(200,20,0,0.4))",
                     ],
                   }}
-                  transition={{ duration: 1.0, repeat: Infinity, ease: "easeInOut" }}
+                  transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
                 >
                   NEXUS
                 </motion.h1>
 
                 <motion.p
-                  className="text-[10px] tracking-[0.7em] uppercase"
-                  style={{ color: "rgba(255,140,0,0.8)", fontFamily: "monospace" }}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5, duration: 0.4 }}
+                  className="text-[11px] tracking-[0.65em] uppercase mt-3"
+                  style={{ color: "rgba(255,160,40,0.9)", fontFamily: "monospace" }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
                 >
                   igniting...
                 </motion.p>
@@ -202,38 +226,11 @@ export default function SplashFire({ visible }: { visible: boolean }) {
             )}
           </AnimatePresence>
 
-          {/* Smoke wisps at top */}
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              className="absolute pointer-events-none rounded-full"
-              style={{
-                width: 60 + i * 30,
-                height: 60 + i * 30,
-                left: `${35 + i * 12}%`,
-                top: "8%",
-                background: "rgba(60,30,10,0.18)",
-                filter: "blur(18px)",
-              }}
-              animate={{
-                y: [0, -40, 0],
-                opacity: [0, 0.4, 0],
-                scale: [0.8, 1.4, 0.8],
-              }}
-              transition={{
-                duration: 3 + i * 0.7,
-                repeat: Infinity,
-                delay: i * 1.1,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-
           {/* Vignette */}
           <div
             className="pointer-events-none absolute inset-0"
             style={{
-              background: "radial-gradient(ellipse 80% 80% at 50% 50%, transparent 20%, rgba(0,0,0,0.7) 100%)",
+              background: "radial-gradient(ellipse 85% 85% at 50% 50%, transparent 15%, rgba(0,0,0,0.75) 100%)",
             }}
           />
         </motion.div>

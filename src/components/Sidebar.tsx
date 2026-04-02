@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Music, MessageSquare, LogOut, Settings, User, StickyNote,
   Shield, Bookmark, CheckSquare, Lock, Bot, Check,
   Wifi, WifiOff, Globe, Palette, Zap, X, LayoutGrid, Paintbrush, Pin, PinOff,
-  Headphones,
+  Headphones, CalendarDays, Cpu,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../context/AuthContext";
@@ -492,7 +492,15 @@ export default function Sidebar() {
       label: "Accueil",
       items: [
         { to: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
-        { to: "/ai",        icon: Bot,             label: "NEXUS AI"       },
+        { to: "/ai",        icon: Bot,             label: "NEXUS AI"      },
+      ],
+    },
+    {
+      label: "Productivité",
+      items: [
+        { to: "/agenda",    icon: CalendarDays,    label: "Agenda"         },
+        { to: "/analytics", icon: StickyNote,      label: t.nav.analytics  },
+        { to: "/logs",      icon: CheckSquare,     label: t.nav.logs       },
         { to: "/widgets",   icon: LayoutGrid,      label: t.nav.widgets    },
       ],
     },
@@ -504,16 +512,9 @@ export default function Sidebar() {
       ],
     },
     {
-      label: "Personnel",
+      label: "Outils",
       items: [
-        { to: "/analytics", icon: StickyNote,      label: t.nav.analytics  },
-        { to: "/logs",      icon: CheckSquare,     label: t.nav.logs       },
         { to: "/database",  icon: Bookmark,        label: t.nav.database   },
-      ],
-    },
-    {
-      label: "Système",
-      items: [
         { to: "/security",  icon: Shield,          label: t.nav.security   },
       ],
     },

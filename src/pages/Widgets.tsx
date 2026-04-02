@@ -609,11 +609,15 @@ const ICON_COLORS: Record<string, string> = {
 
 const WIDGETS_VISIBLE_KEY = "nexus-widgets-visible";
 
+
 export default function Widgets() {
   const [visible, setVisible] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem(WIDGETS_VISIBLE_KEY) || "null") || ["clock", "calendar", "spotify", "stats", "quote"]; }
-    catch { return ["clock", "calendar", "spotify", "stats", "quote"]; }
+    try {
+      const stored = JSON.parse(localStorage.getItem(WIDGETS_VISIBLE_KEY) || "null");
+      return stored || ["clock", "calendar", "spotify", "stats", "quote", "pomodoro"];
+    } catch { return ["clock", "calendar", "spotify", "stats", "quote", "pomodoro"]; }
   });
+  const [manageOpen, setManageOpen] = useState(false);
 
   const toggleWidget = (id: string) => {
     const next = visible.includes(id) ? visible.filter(v => v !== id) : [...visible, id];
@@ -624,93 +628,219 @@ export default function Widgets() {
   const activeWidgets = WIDGETS_CONFIG.filter(w => visible.includes(w.id));
 
   return (
-    <div className="flex-1 p-6 md:p-8">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-8">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight text-white flex items-center gap-3">
-              <LayoutGrid className="h-10 w-10 text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 to-sky-500">
+    <div className="min-h-screen flex flex-col">
+      {/* ── Hero header ── */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45 }}
+        className="relative overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, rgba(34,211,238,0.06) 0%, rgba(79,110,247,0.06) 50%, rgba(139,92,246,0.04) 100%)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        {/* Ambient orbs */}
+        <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(34,211,238,0.07) 0%, transparent 70%)" }} />
+        <div className="absolute -top-8 right-32 w-48 h-48 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 70%)" }} />
+
+        <div className="relative z-10 px-6 md:px-10 py-8 flex flex-col sm:flex-row sm:items-center gap-6">
+          <div className="flex items-center gap-4 flex-1">
+            <div
+              className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0"
+              style={{
+                background: "rgba(34,211,238,0.12)",
+                border: "1px solid rgba(34,211,238,0.25)",
+                boxShadow: "0 0 24px rgba(34,211,238,0.15)",
+              }}
+            >
+              <LayoutGrid className="h-7 w-7 text-cyan-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black tracking-tight text-white">
                 Widgets
-              </span>
-            </h1>
-            <p className="mt-2 text-gray-400">Affichez vos informations importantes en un coup d'œil.</p>
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {activeWidgets.length} widget{activeWidgets.length !== 1 ? "s" : ""} actif{activeWidgets.length !== 1 ? "s" : ""} sur {WIDGETS_CONFIG.length}
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {WIDGETS_CONFIG.map(w => {
-              const isActive = visible.includes(w.id);
-              return (
-                <button
-                  key={w.id}
-                  onClick={() => toggleWidget(w.id)}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition-all ${
-                    isActive
-                      ? "bg-white/10 border-white/20 text-white"
-                      : "bg-transparent border-white/8 text-gray-600 hover:border-white/15 hover:text-gray-400"
-                  }`}
-                >
-                  <w.icon className="h-3 w-3" />
-                  {w.label}
-                  {isActive
-                    ? <X className="h-2.5 w-2.5 ml-0.5 opacity-60" />
-                    : <Plus className="h-2.5 w-2.5 ml-0.5 opacity-60" />
-                  }
-                </button>
-              );
-            })}
+          {/* Stats pills */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 rounded-2xl bg-white/4 border border-white/8 px-4 py-2.5">
+              <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs text-gray-400 font-medium">{activeWidgets.length} actifs</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-2xl bg-white/4 border border-white/8 px-4 py-2.5">
+              <Eye className="h-3.5 w-3.5 text-gray-500" />
+              <span className="text-xs text-gray-400 font-medium">{WIDGETS_CONFIG.length - activeWidgets.length} masqués</span>
+            </div>
+            <button
+              onClick={() => setManageOpen(o => !o)}
+              className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-semibold border transition-all ${
+                manageOpen
+                  ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-300"
+                  : "bg-white/6 border-white/12 text-gray-300 hover:bg-white/10 hover:border-white/20"
+              }`}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Gérer
+            </button>
           </div>
         </div>
+
+        {/* Manage drawer */}
+        <AnimatePresence>
+          {manageOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              className="overflow-hidden border-t border-white/6"
+            >
+              <div className="px-6 md:px-10 py-5">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-600 font-semibold mb-3">Activer / masquer</p>
+                <div className="flex flex-wrap gap-2">
+                  {WIDGETS_CONFIG.map(w => {
+                    const isActive = visible.includes(w.id);
+                    return (
+                      <motion.button
+                        key={w.id}
+                        onClick={() => toggleWidget(w.id)}
+                        whileTap={{ scale: 0.95 }}
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold border transition-all ${
+                          isActive
+                            ? `${ACCENT_COLORS[w.color] ? "text-white" : "text-white"} border-[${BORDER_COLORS[w.color]}]`
+                            : "bg-transparent border-white/8 text-gray-600 hover:text-gray-400 hover:border-white/15"
+                        }`}
+                        style={isActive ? {
+                          background: ACCENT_COLORS[w.color],
+                          borderColor: BORDER_COLORS[w.color],
+                          color: ICON_COLORS[w.color],
+                        } : {}}
+                      >
+                        <w.icon className="h-3.5 w-3.5" />
+                        {w.label}
+                        {isActive
+                          ? <Check className="h-3 w-3 ml-0.5 opacity-70" />
+                          : <Plus className="h-3 w-3 ml-0.5 opacity-40" />
+                        }
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
-      {activeWidgets.length === 0 ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-24 gap-4">
-          <LayoutGrid className="h-16 w-16 text-gray-800" />
-          <p className="text-gray-600 text-sm">Aucun widget actif. Activez-en un ci-dessus.</p>
-        </motion.div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[160px]"
-        >
-          <AnimatePresence>
-            {activeWidgets.map((w, i) => (
-              <motion.div
-                key={w.id}
-                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.88, y: -8 }}
-                transition={{ delay: i * 0.04, duration: 0.28 }}
-                className="rounded-2xl border p-4 backdrop-blur-xl overflow-hidden relative group"
-                style={{
-                  background: ACCENT_COLORS[w.color] || "rgba(255,255,255,0.03)",
-                  borderColor: BORDER_COLORS[w.color] || "rgba(255,255,255,0.1)",
-                  gridColumn: w.cols > 1 ? `span ${w.cols}` : undefined,
-                  gridRow:    w.rows > 1 ? `span ${w.rows}` : undefined,
-                }}
-              >
-                {/* Subtle glow in corner */}
-                <div
-                  className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none opacity-30"
-                  style={{ background: BORDER_COLORS[w.color]?.replace("0.28", "1") || "white", filter: "blur(24px)" }}
-                />
+      {/* ── Widget grid ── */}
+      <div className="flex-1 p-6 md:p-8">
+        {activeWidgets.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-32 gap-5"
+          >
+            <div className="h-24 w-24 rounded-3xl bg-white/3 border border-white/8 flex items-center justify-center">
+              <LayoutGrid className="h-12 w-12 text-gray-700" />
+            </div>
+            <div className="text-center">
+              <p className="text-gray-400 font-medium">Aucun widget actif</p>
+              <p className="text-gray-600 text-sm mt-1">Clique sur "Gérer" pour activer des widgets</p>
+            </div>
+            <button
+              onClick={() => setManageOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/6 border border-white/12 text-gray-300 text-sm font-medium hover:bg-white/10 transition-colors"
+            >
+              <Plus className="h-4 w-4" /> Ajouter des widgets
+            </button>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.35 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[170px]"
+          >
+            <AnimatePresence mode="popLayout">
+              {activeWidgets.map((w, i) => (
+                <motion.div
+                  key={w.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.85, y: -12 }}
+                  transition={{ delay: i * 0.035, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative rounded-3xl border overflow-hidden group"
+                  style={{
+                    background: `linear-gradient(135deg, ${ACCENT_COLORS[w.color] || "rgba(255,255,255,0.03)"} 0%, rgba(255,255,255,0.02) 100%)`,
+                    borderColor: BORDER_COLORS[w.color] || "rgba(255,255,255,0.08)",
+                    gridColumn: w.cols > 1 ? `span ${w.cols}` : undefined,
+                    gridRow:    w.rows > 1 ? `span ${w.rows}` : undefined,
+                    backdropFilter: "blur(20px)",
+                  }}
+                >
+                  {/* Corner glow */}
+                  <div
+                    className="absolute -top-6 -right-6 w-20 h-20 rounded-full pointer-events-none"
+                    style={{
+                      background: ICON_COLORS[w.color] || "rgba(255,255,255,0.5)",
+                      filter: "blur(22px)",
+                      opacity: 0.2,
+                    }}
+                  />
 
-                <div className="flex items-center gap-1.5 mb-3 relative z-10">
-                  <w.icon className="h-3.5 w-3.5" style={{ color: ICON_COLORS[w.color] }} />
-                  <span className="text-[10px] uppercase tracking-widest font-medium" style={{ color: ICON_COLORS[w.color]?.replace("0.8", "0.6") }}>
-                    {w.label}
-                  </span>
-                </div>
+                  {/* Bottom fade */}
+                  <div
+                    className="absolute bottom-0 inset-x-0 h-12 pointer-events-none"
+                    style={{
+                      background: `linear-gradient(to top, ${ACCENT_COLORS[w.color]?.replace("0.12", "0.15") || "rgba(255,255,255,0.04)"} 0%, transparent 100%)`,
+                    }}
+                  />
 
-                <div className="flex-1 h-[calc(100%-28px)] relative z-10">
-                  <w.component />
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
-      )}
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 pt-4 pb-0 relative z-10">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-7 w-7 rounded-xl flex items-center justify-center shrink-0"
+                        style={{
+                          background: ACCENT_COLORS[w.color]?.replace("0.12", "0.25") || "rgba(255,255,255,0.06)",
+                          border: `1px solid ${BORDER_COLORS[w.color] || "rgba(255,255,255,0.1)"}`,
+                        }}
+                      >
+                        <w.icon className="h-3.5 w-3.5" style={{ color: ICON_COLORS[w.color] }} />
+                      </div>
+                      <span
+                        className="text-[10px] uppercase tracking-[0.18em] font-bold"
+                        style={{ color: ICON_COLORS[w.color]?.replace("0.8", "0.65") }}
+                      >
+                        {w.label}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => toggleWidget(w.id)}
+                      className="opacity-0 group-hover:opacity-100 h-6 w-6 rounded-lg flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      title="Masquer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Content */}
+                  <div className="px-4 pb-4 pt-2 h-[calc(100%-48px)] relative z-10">
+                    <w.component />
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }

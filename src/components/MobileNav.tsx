@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Music, MessageSquare, Bot, StickyNote, Shield,
   Bookmark, CheckSquare, User, Settings, LogOut, Lock, X,
-  MoreHorizontal, Play, Pause, ChevronRight,
+  MoreHorizontal, Play, Pause, ChevronRight, CalendarDays, LayoutGrid,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../context/AuthContext";
@@ -11,16 +11,18 @@ import { useLanguage } from "../context/LanguageContext";
 import { useSpotify } from "../context/SpotifyContext";
 
 const allNavItems = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", color: "text-indigo-400", bg: "bg-indigo-500/15 border-indigo-500/25" },
-  { to: "/ai", icon: Bot, label: "NEXUS AI", color: "text-violet-400", bg: "bg-violet-500/15 border-violet-500/25" },
-  { to: "/spotify", icon: Music, label: "Spotify", color: "text-emerald-400", bg: "bg-emerald-500/15 border-emerald-500/25" },
-  { to: "/discord", icon: MessageSquare, label: "Discord", color: "text-blue-400", bg: "bg-blue-500/15 border-blue-500/25" },
-  { to: "/analytics", icon: StickyNote, label: "Analytics", color: "text-yellow-400", bg: "bg-yellow-500/15 border-yellow-500/25" },
-  { to: "/security", icon: Shield, label: "Sécurité", color: "text-red-400", bg: "bg-red-500/15 border-red-500/25" },
-  { to: "/database", icon: Bookmark, label: "Base de données", color: "text-cyan-400", bg: "bg-cyan-500/15 border-cyan-500/25" },
-  { to: "/logs", icon: CheckSquare, label: "Logs", color: "text-orange-400", bg: "bg-orange-500/15 border-orange-500/25" },
-  { to: "/profile", icon: User, label: "Profil", color: "text-pink-400", bg: "bg-pink-500/15 border-pink-500/25" },
-  { to: "/settings", icon: Settings, label: "Paramètres", color: "text-emerald-400", bg: "bg-emerald-500/15 border-emerald-500/25" },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard",   color: "text-indigo-400",  bg: "bg-indigo-500/15 border-indigo-500/25"  },
+  { to: "/ai",        icon: Bot,             label: "NEXUS AI",    color: "text-violet-400",  bg: "bg-violet-500/15 border-violet-500/25"  },
+  { to: "/agenda",    icon: CalendarDays,    label: "Agenda",      color: "text-sky-400",     bg: "bg-sky-500/15 border-sky-500/25"        },
+  { to: "/spotify",   icon: Music,           label: "Spotify",     color: "text-emerald-400", bg: "bg-emerald-500/15 border-emerald-500/25"},
+  { to: "/discord",   icon: MessageSquare,   label: "Discord",     color: "text-blue-400",    bg: "bg-blue-500/15 border-blue-500/25"     },
+  { to: "/analytics", icon: StickyNote,      label: "Notes",       color: "text-yellow-400",  bg: "bg-yellow-500/15 border-yellow-500/25" },
+  { to: "/widgets",   icon: LayoutGrid,      label: "Widgets",     color: "text-cyan-400",    bg: "bg-cyan-500/15 border-cyan-500/25"     },
+  { to: "/security",  icon: Shield,          label: "Sécurité",    color: "text-red-400",     bg: "bg-red-500/15 border-red-500/25"       },
+  { to: "/database",  icon: Bookmark,        label: "Base",        color: "text-teal-400",    bg: "bg-teal-500/15 border-teal-500/25"     },
+  { to: "/logs",      icon: CheckSquare,     label: "Tâches",      color: "text-orange-400",  bg: "bg-orange-500/15 border-orange-500/25" },
+  { to: "/profile",   icon: User,            label: "Profil",      color: "text-pink-400",    bg: "bg-pink-500/15 border-pink-500/25"     },
+  { to: "/settings",  icon: Settings,        label: "Paramètres",  color: "text-emerald-400", bg: "bg-emerald-500/15 border-emerald-500/25"},
 ];
 
 const quickItems = allNavItems.slice(0, 4);

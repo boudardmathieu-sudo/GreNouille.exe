@@ -27,7 +27,7 @@ A full-stack web application built with React (Vite) on the frontend and Express
 │       ├── logs.ts     # System logs routes
 │       └── analytics.ts # Analytics routes
 ├── src/
-│   ├── App.tsx         # Main React app
+│   ├── App.tsx         # Main React app + routes (incl. /agenda)
 │   ├── main.tsx        # React entry point
 │   ├── components/     # Shared UI components
 │   ├── context/        # React context providers
@@ -66,25 +66,30 @@ Both Supabase clients are lazily initialized — the app starts without them, bu
 - **Settings page** simplified: Removed animation/appearance sections (now in Themes). Added a link to the Themes page.
 
 ## Version 1.3.0 Changes
-- **Splash screen reworks:**
-  - SplashNetflix: Full cinematic rework — scan line, proper SVG N (left/right pillars + diagonal crossbar), shine sweep, ground shadow, letterbox bars
-  - SplashApple: Fixed N path (was drawing M shape) — now uses three separate SVG lines with animated pathLength for a clean Apple-style N
-  - SplashFire: Enhanced fire — bigger canvas (340×220), screen blend mode, upper ambient glow, smoke wisps at top, 40 embers with correct colors, delayed text reveal
-- **15 splash screen rewrites** (pre-existing):
-  - SplashNexus, SplashMatrix, SplashCyberpunk, SplashiOS, SplashWindows, SplashHUD, SplashGlitch, SplashAurora, SplashRetro, SplashVaporwave, SplashIce, SplashNeon
-- **Sidebar fixes & new categories** (`src/components/Sidebar.tsx`):
-  - Fixed text cut-off bug: NexusHub now renders as a fixed-position overlay (no longer clipped by sidebar overflow-hidden); logo header has own overflow-hidden to clip NEXUS text during width animation
-  - New 5-group nav structure: Accueil (Dashboard, AI, Widgets) / Médias & Social (Spotify, Discord) / Personnel (Notes, Tâches, Favoris) / Système (Security) / Compte (Themes, Profile, Settings)
-  - Spotify nav icon changed to Headphones for better semantics
-- **Widgets page rework** (`src/pages/Widgets.tsx`):
-  - 5 new widgets: Pomodoro (25/5 min timer with circular progress, session counter), Objectifs (mini checklist with localStorage persistence), Batterie (ring gauge with charge status, uses Battery API), Météo (enhanced with wind + humidity tiles), Compte à rebours (countdown to user-set date)
-  - Total: 10 widgets (was 5)
-  - Visual improvements: per-color icon tinting, corner glow effect, AnimatePresence exit animations
-- **Discord gateway fixes** (`server/discord-gateway.ts`):
-  - Removed duplicate `nick` slash command definition
-  - Removed invalid `client.on("disconnect")` event (not valid in discord.js v14)
-  - Increased reconnect cap from 10 to 25 attempts
-  - Added 5 new slash commands: `/say`, `/poll`, `/giveaway`, `/emojis`, `/stickers`
+- **SplashFire complete rework** (`src/components/splashscreens/SplashFire.tsx`):
+  - No more canvas — entirely CSS/Motion layered approach
+  - 7 overlapping flame blobs (radial-gradient + blur + mix-blend-mode: screen)
+  - Sharp white-hot inner flame core
+  - Heat distortion overlay, 4 smoke wisps, 50 color-varied ember particles
+  - 3-phase reveal: ignite → burn → NEXUS text (gradient: white→yellow→orange→red→deep red with pulsing glow)
+- **SplashNetflix / SplashApple reworks** (cinematic redesign / SVG N path fix)
+- **New page: Agenda** (`src/pages/Agenda.tsx`, route `/agenda`):
+  - Monthly calendar with prev/next navigation, today highlight, per-day task dot
+  - Task creation: text, priority (Faible/Moyen/Urgent), time picker, tags (Perso/Travail/Sport/Santé/Étude/Projet)
+  - Tag filter pills, priority sort, progress bar, mini stats (today / pending)
+  - localStorage persistence under `nexus-agenda-tasks`
+  - Split layout: calendar panel (left) + task panel (right) with glassmorphism
+- **Sidebar new categories** (`src/components/Sidebar.tsx`):
+  - 5 semantic groups: **Accueil** (Dashboard, AI) / **Productivité** (Agenda, Notes, Tâches, Widgets) / **Médias & Social** (Spotify, Discord) / **Outils** (Favoris, Sécurité) / **Compte** (Thèmes, Profil, Paramètres)
+  - Agenda entry uses CalendarDays icon
+- **Widgets page redesign** (`src/pages/Widgets.tsx`):
+  - Hero header: gradient + ambient orbs + glow icon + active/hidden count pills
+  - "Gérer" collapsible drawer (slides below header) replaces old flat pill toggles
+  - Cards: rounded-3xl, gradient bg, icon badge in header, X button on hover, layout animation
+  - Empty state with illustration + CTA
+  - 10 widgets: Horloge, Calendrier, Spotify, Système, Citation, Pomodoro, Objectifs, Batterie, Météo, Compte à rebours
+- **MobileNav updated**: Agenda + Widgets added, labels updated
+- **Discord gateway fixes**: Removed duplicate `/nick`, invalid disconnect event; added `/say`, `/poll`, `/giveaway`, `/emojis`, `/stickers`; reconnect cap 10 → 25
 
 ## Key Notes
 - The `authenticateToken` middleware lives in `server/middleware/auth.ts` (extracted to avoid circular dependency between `auth.ts` routes and `logs.ts`)
@@ -92,3 +97,4 @@ Both Supabase clients are lazily initialized — the app starts without them, bu
 - Vite is configured with `allowedHosts: true` for Replit proxy compatibility
 - `server/lib/supabaseAdmin.ts` uses lazy initialization to avoid crashing on startup when env vars are not set
 - `src/lib/supabase.ts` uses placeholder credentials to avoid crashing when Supabase env vars are not set
+- Pre-existing TypeScript warnings (non-blocking): React `key` prop on JSX components in Sidebar/Themes/Agenda (React runtime handles these correctly), `React.RefObject` resolved via named import, `import.meta.env` in supabase.ts
