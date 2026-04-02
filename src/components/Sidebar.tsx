@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Music, MessageSquare, LogOut, Settings, User, StickyNote,
   ChevronLeft, ChevronRight, Shield, Bookmark, CheckSquare, Lock, Bot, Check,
-  Wifi, WifiOff, Globe, Palette, BarChart3, Zap, X, LayoutGrid, Paintbrush,
+  Wifi, WifiOff, Globe, Palette, Zap, X, LayoutGrid, Paintbrush, Pin, PinOff,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../context/AuthContext";
@@ -133,12 +133,13 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
 
   return (
     <motion.div ref={ref}
-      initial={{ opacity: 0, scale: 0.92, x: -10 }} animate={{ opacity: 1, scale: 1, x: 0 }} exit={{ opacity: 0, scale: 0.92, x: -10 }}
-      transition={{ duration: 0.18, ease: "easeOut" }}
+      initial={{ opacity: 0, scale: 0.92, x: -8 }}
+      animate={{ opacity: 1, scale: 1, x: 0 }}
+      exit={{ opacity: 0, scale: 0.9, x: -8 }}
+      transition={{ duration: 0.16, ease: "easeOut" }}
       className="absolute left-16 top-0 z-[200] rounded-2xl border border-white/12 shadow-2xl"
       style={{ background: "rgba(6,6,18,0.98)", backdropFilter: "blur(28px)", width: 300, maxHeight: "calc(100vh - 32px)", overflowY: "auto" }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
           <div className={`h-6 w-6 ${shapeClass} flex items-center justify-center text-sm shrink-0`}
@@ -157,7 +158,7 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
       <div className="mx-4 mt-2 mb-3 rounded-xl bg-white/5 border border-white/8 p-3 text-center">
         <div className="flex items-center justify-center gap-1 font-mono">
           <span className="text-3xl font-black text-white tabular-nums">{hours}</span>
-          <span className="text-2xl font-black text-gray-500 animate-pulse">:</span>
+          <motion.span className="text-2xl font-black text-gray-500" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }}>:</motion.span>
           <span className="text-3xl font-black text-white tabular-nums">{minutes}</span>
           <span className="text-lg font-bold text-gray-600 tabular-nums ml-1">{seconds}</span>
         </div>
@@ -167,11 +168,17 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
       {/* User info */}
       {user && (
         <div className="mx-4 mb-3 flex items-center gap-3 rounded-xl bg-white/5 border border-white/8 px-3 py-2.5">
-          <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+          <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden border border-white/10"
+            style={{ boxShadow: `0 0 0 2px ${previewColor.border}` }}
+          >
             {(user as any).avatarUrl ? (
               <img src={(user as any).avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
-              <span className="text-xs font-bold text-white">{user.username?.[0]?.toUpperCase()}</span>
+              <div className="h-full w-full flex items-center justify-center text-xs font-bold text-white"
+                style={{ background: `linear-gradient(135deg, ${previewColor.hex}55, ${previewColor.hex}33)` }}
+              >
+                {user.username?.[0]?.toUpperCase()}
+              </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -205,8 +212,6 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
         <p className="text-[10px] text-gray-600 uppercase tracking-widest flex items-center gap-1.5">
           <Palette className="h-3 w-3" /> Personnalisation du logo
         </p>
-
-        {/* Color */}
         <div>
           <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Couleur</p>
           <div className="grid grid-cols-7 gap-1">
@@ -221,7 +226,6 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
           </div>
         </div>
 
-        {/* Font */}
         <div>
           <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Police</p>
           <div className="grid grid-cols-3 gap-1">
@@ -239,7 +243,6 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
           </div>
         </div>
 
-        {/* Effect */}
         <div>
           <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Effet</p>
           <div className="grid grid-cols-3 gap-1">
@@ -260,7 +263,6 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
           </div>
         </div>
 
-        {/* Shape */}
         <div>
           <p className="text-[9px] text-gray-700 uppercase tracking-wider mb-1.5">Forme</p>
           <div className="grid grid-cols-3 gap-1">
@@ -283,7 +285,7 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
         </div>
       </div>
 
-      {/* Language toggle */}
+      {/* Language */}
       <div className="mx-4 mb-3">
         <p className="text-[10px] text-gray-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
           <Globe className="h-3 w-3" /> Langue
@@ -330,16 +332,127 @@ function NexusHub({ onClose, logoColor, logoStyle }: { onClose: () => void; logo
   );
 }
 
+// ── Tooltip for collapsed items ─────────────────────────────────────────────
+
+function NavTooltip({ label, visible }: { label: string; visible: boolean }) {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, x: -4, scale: 0.95 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, x: -4, scale: 0.95 }}
+          transition={{ duration: 0.1 }}
+          className="absolute left-full ml-2 z-[300] px-2.5 py-1.5 rounded-lg text-xs font-medium text-white whitespace-nowrap pointer-events-none"
+          style={{
+            background: "rgba(10,10,25,0.96)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          {label}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ── Section label ─────────────────────────────────────────────────────────────
+
+function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean }) {
+  if (collapsed) {
+    return (
+      <div className="mx-auto my-1.5 w-6 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
+    );
+  }
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="px-3 pt-2.5 pb-1"
+    >
+      <p className="text-[9px] uppercase tracking-[0.18em] font-semibold" style={{ color: "rgba(255,255,255,0.22)" }}>
+        {label}
+      </p>
+    </motion.div>
+  );
+}
+
+// ── Nav item ─────────────────────────────────────────────────────────────────
+
+function NavItem({
+  to, icon: Icon, label, collapsed, logoColor,
+}: {
+  to: string; icon: any; label: string; collapsed: boolean; logoColor: LogoColor;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div className="relative">
+      <NavLink
+        to={to}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className={({ isActive }) =>
+          `group relative flex items-center ${collapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+            isActive
+              ? "border"
+              : "text-gray-500 hover:bg-white/5 hover:text-white border border-transparent"
+          }`
+        }
+        style={({ isActive }) => isActive ? {
+          background: `${logoColor.bg}`,
+          borderColor: `${logoColor.border}`,
+          color: logoColor.text,
+        } : {}}
+      >
+        {({ isActive }) => (
+          <>
+            {isActive && (
+              <motion.div
+                layoutId="sidebar-active-bg"
+                className="absolute inset-0 rounded-xl pointer-events-none"
+                style={{
+                  background: `linear-gradient(135deg, ${logoColor.bg}, rgba(0,0,0,0))`,
+                  boxShadow: `inset 0 0 0 1px ${logoColor.border}, 0 0 12px ${logoColor.glow}20`,
+                }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              />
+            )}
+            <Icon className="h-5 w-5 shrink-0 relative z-10" style={{ color: isActive ? logoColor.text : undefined }} />
+            {!collapsed && (
+              <span className="relative z-10 whitespace-nowrap" style={{ color: isActive ? logoColor.text : undefined }}>{label}</span>
+            )}
+            {isActive && !collapsed && (
+              <motion.div
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full"
+                style={{ background: logoColor.hex, boxShadow: `0 0 6px ${logoColor.glow}` }}
+                layoutId="sidebar-active-dot"
+              />
+            )}
+          </>
+        )}
+      </NavLink>
+      {collapsed && <NavTooltip label={label} visible={hovered} />}
+    </div>
+  );
+}
+
+// ── Main Sidebar ─────────────────────────────────────────────────────────────
+
 export default function Sidebar() {
   const { signOut, lock, user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [isHovered, setIsHovered]   = useState(false);
-  const [isPinned, setIsPinned]     = useState(false);
-  const [showHub, setShowHub]       = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [showHub, setShowHub] = useState(false);
   const isMobile = useIsMobile();
   const logoColor = useLogoColor();
   const logoStyle = useLogoStyle();
+  const [lockHovered, setLockHovered] = useState(false);
+  const [logoutHovered, setLogoutHovered] = useState(false);
 
   const isCollapsed = !isPinned && !isHovered;
 
@@ -351,39 +464,67 @@ export default function Sidebar() {
   const letterCSS  = getLetterStyle(logoColor, logoStyle);
   const shapeClass = getContainerShape(logoStyle);
 
-  const navItems = [
-    { to: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
-    { to: "/ai",        icon: Bot,             label: "NEXUS AI"       },
-    { to: "/spotify",   icon: Music,           label: t.nav.spotify    },
-    { to: "/discord",   icon: MessageSquare,   label: t.nav.discord    },
-    { to: "/analytics", icon: StickyNote,      label: t.nav.analytics  },
-    { to: "/security",  icon: Shield,          label: t.nav.security   },
-    { to: "/database",  icon: Bookmark,        label: t.nav.database   },
-    { to: "/logs",      icon: CheckSquare,     label: t.nav.logs       },
-    { to: "/widgets",   icon: LayoutGrid,      label: t.nav.widgets    },
-    { to: "/themes",    icon: Paintbrush,      label: t.nav.themes     },
-    { to: "/profile",   icon: User,            label: t.nav.profile    },
-    { to: "/settings",  icon: Settings,        label: t.nav.settings   },
-  ];
-
   const avatarUrl = (user as any)?.avatarUrl;
   const initial   = user?.username?.[0]?.toUpperCase();
+
+  const navGroups = [
+    {
+      label: "Principal",
+      items: [
+        { to: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
+        { to: "/ai",        icon: Bot,             label: "NEXUS AI"       },
+        { to: "/spotify",   icon: Music,           label: t.nav.spotify    },
+        { to: "/discord",   icon: MessageSquare,   label: t.nav.discord    },
+      ],
+    },
+    {
+      label: "Outils",
+      items: [
+        { to: "/analytics", icon: StickyNote,      label: t.nav.analytics  },
+        { to: "/security",  icon: Shield,          label: t.nav.security   },
+        { to: "/database",  icon: Bookmark,        label: t.nav.database   },
+        { to: "/logs",      icon: CheckSquare,     label: t.nav.logs       },
+        { to: "/widgets",   icon: LayoutGrid,      label: t.nav.widgets    },
+      ],
+    },
+    {
+      label: "Compte",
+      items: [
+        { to: "/themes",    icon: Paintbrush,      label: t.nav.themes     },
+        { to: "/profile",   icon: User,            label: t.nav.profile    },
+        { to: "/settings",  icon: Settings,        label: t.nav.settings   },
+      ],
+    },
+  ];
 
   if (isMobile) return <MobileNav />;
 
   return (
-    <div
-      style={{ width: isCollapsed ? 80 : 256 }}
+    <motion.div
+      animate={{ width: isCollapsed ? 80 : 256 }}
+      transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="relative flex h-screen flex-col overflow-hidden border-r border-white/10 bg-[#050505] z-50 transition-[width] duration-200 ease-in-out shrink-0"
+      className="relative flex h-screen flex-col overflow-hidden border-r border-white/8 z-50 shrink-0"
+      style={{ background: "rgba(5,5,14,0.98)", backdropFilter: "blur(0px)" }}
     >
+      {/* Subtle side accent line using logoColor */}
+      <div className="absolute inset-y-0 right-0 w-px pointer-events-none"
+        style={{ background: `linear-gradient(180deg, transparent, ${logoColor.border}, transparent)`, opacity: 0.5 }}
+      />
+
       {/* Pin toggle */}
-      <button onClick={() => setIsPinned(!isPinned)}
-        className="absolute -right-3 top-8 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-[#1a1a1a] text-white hover:bg-white/20 transition-colors duration-200"
+      <motion.button
+        onClick={() => setIsPinned(!isPinned)}
+        className="absolute -right-3.5 top-7 z-50 flex h-7 w-7 items-center justify-center rounded-full border border-white/12 text-gray-500 hover:text-white transition-colors duration-150"
+        style={{ background: "rgba(12,12,28,0.95)", backdropFilter: "blur(8px)", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}
+        animate={{ opacity: isCollapsed || isPinned ? 1 : 0 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        title={isPinned ? "Désépingler" : "Épingler"}
       >
-        {isPinned ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-      </button>
+        {isPinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+      </motion.button>
 
       {/* Logo header */}
       <div className={`flex-shrink-0 flex items-center ${isCollapsed ? "justify-center" : "gap-3"} px-4 pt-5 pb-4`}>
@@ -391,80 +532,116 @@ export default function Sidebar() {
           <AnimatePresence>
             {showHub && <NexusHub onClose={() => setShowHub(false)} logoColor={logoColor} logoStyle={logoStyle} />}
           </AnimatePresence>
-          <button onClick={() => setShowHub(!showHub)}
+          <motion.button
+            onClick={() => setShowHub(!showHub)}
             title="Nexus Hub"
-            className={`flex shrink-0 h-8 w-8 items-center justify-center transition-transform hover:scale-110 active:scale-95 ${shapeClass}`}
+            className={`flex shrink-0 h-8 w-8 items-center justify-center ${shapeClass}`}
             style={{
               background: `linear-gradient(145deg, ${logoColor.bg} 0%, rgba(0,0,0,0.1) 100%)`,
               border: `1px solid ${logoColor.border}`,
               boxShadow: `0 0 0 1px ${logoColor.bg}, 0 0 14px ${logoColor.glow}40, inset 0 1px 0 rgba(255,255,255,0.15)`,
             }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.92 }}
           >
             <span className="text-sm select-none leading-none" style={letterCSS}>N</span>
-          </button>
+          </motion.button>
         </div>
-        {!isCollapsed && (
-          <h1 className="text-xl font-black tracking-[0.2em] whitespace-nowrap"
-            style={{ background: "linear-gradient(135deg, #ffffff 0%, rgba(160,180,255,0.85) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-          >NEXUS</h1>
-        )}
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.h1
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.15 }}
+              className="text-xl font-black tracking-[0.2em] whitespace-nowrap"
+              style={{ background: "linear-gradient(135deg, #ffffff 0%, rgba(160,180,255,0.85) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+            >NEXUS</motion.h1>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Nav — flex-1 + min-h-0 allows proper scrolling */}
-      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 pb-2 space-y-0.5 custom-scrollbar">
-        {navItems.map((item) => (
-          <NavLink key={item.to} to={item.to}
-            className={({ isActive }) =>
-              `group relative flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
-                isActive
-                  ? "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20"
-                  : "text-gray-400 hover:bg-white/5 hover:text-indigo-300 border border-transparent"
-              }`
-            }
-            title={isCollapsed ? item.label : undefined}
-          >
-            <item.icon className="h-5 w-5 shrink-0" />
-            {!isCollapsed && <span className="whitespace-nowrap">{item.label}</span>}
-          </NavLink>
+      {/* Nav groups */}
+      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 pb-2 space-y-0 custom-scrollbar">
+        {navGroups.map((group, gi) => (
+          <div key={gi}>
+            <SectionLabel label={group.label} collapsed={isCollapsed} />
+            <div className="space-y-0.5">
+              {group.items.map((item) => (
+                <NavItem
+                  key={item.to}
+                  to={item.to}
+                  icon={item.icon}
+                  label={item.label}
+                  collapsed={isCollapsed}
+                  logoColor={logoColor}
+                />
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 
-      {/* Bottom section — always sticks to bottom */}
-      <div className="flex-shrink-0 px-2 pt-2 pb-3 border-t border-white/5">
-        {!isCollapsed && user && (
-          <div className="mb-2 flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 px-3 py-2">
-            <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden border border-white/10">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-                  <span className="text-xs font-bold text-white">{initial}</span>
-                </div>
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user.username}</p>
-              <p className="text-xs text-gray-500 truncate">{user.email}</p>
-            </div>
-          </div>
-        )}
+      {/* Bottom section */}
+      <div className="flex-shrink-0 px-2 pt-2 pb-3 border-t border-white/6">
+        <AnimatePresence>
+          {!isCollapsed && user && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              transition={{ duration: 0.14 }}
+              className="mb-2 flex items-center gap-3 rounded-xl border border-white/6 bg-white/4 px-3 py-2"
+            >
+              <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden border"
+                style={{ borderColor: logoColor.border }}
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-xs font-bold text-white"
+                    style={{ background: `linear-gradient(135deg, ${logoColor.hex}55, ${logoColor.hex}33)` }}
+                  >
+                    {initial}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-white truncate">{user.username}</p>
+                <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <button onClick={lock}
-          className={`w-full flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-yellow-500/10 hover:text-yellow-400 mb-0.5`}
-          title={isCollapsed ? "Verrouiller" : undefined}
-        >
-          <Lock className="h-5 w-5 shrink-0" />
-          {!isCollapsed && <span className="whitespace-nowrap">Verrouiller</span>}
-        </button>
+        {/* Lock button */}
+        <div className="relative">
+          <button
+            onClick={lock}
+            onMouseEnter={() => setLockHovered(true)}
+            onMouseLeave={() => setLockHovered(false)}
+            className={`w-full flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:bg-yellow-500/10 hover:text-yellow-400 mb-0.5`}
+          >
+            <Lock className="h-5 w-5 shrink-0" />
+            {!isCollapsed && <span className="whitespace-nowrap">Verrouiller</span>}
+          </button>
+          {isCollapsed && <NavTooltip label="Verrouiller" visible={lockHovered} />}
+        </div>
 
-        <button onClick={handleLogout}
-          className={`w-full flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-red-500/10 hover:text-red-400`}
-          title={isCollapsed ? t.nav.logout : undefined}
-        >
-          <LogOut className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isCollapsed ? "" : "group-hover:-translate-x-1"}`} />
-          {!isCollapsed && <span className="whitespace-nowrap">{t.nav.logout}</span>}
-        </button>
+        {/* Logout button */}
+        <div className="relative">
+          <button
+            onClick={handleLogout}
+            onMouseEnter={() => setLogoutHovered(true)}
+            onMouseLeave={() => setLogoutHovered(false)}
+            className={`w-full flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-red-500/10 hover:text-red-400`}
+          >
+            <LogOut className="h-5 w-5 shrink-0" />
+            {!isCollapsed && <span className="whitespace-nowrap">{t.nav.logout}</span>}
+          </button>
+          {isCollapsed && <NavTooltip label={t.nav.logout} visible={logoutHovered} />}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

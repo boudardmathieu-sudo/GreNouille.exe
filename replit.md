@@ -65,6 +65,37 @@ Both Supabase clients are lazily initialized — the app starts without them, bu
 - **Widgets page** (`src/pages/Widgets.tsx`): Live clock, calendar, Spotify mini-player, system stats, and quote widgets. Widget visibility stored in `localStorage`.
 - **Settings page** simplified: Removed animation/appearance sections (now in Themes). Added a link to the Themes page.
 
+## Version 1.3.0 Changes
+- **15 splash screen rewrites** (all except TikTok, Gold, Minimal):
+  - SplashNexus: Canvas particle grid + animated progress shimmer bar
+  - SplashMatrix: Full canvas matrix rain + terminal boot log
+  - SplashCyberpunk: Dual-phase glitch with neon corner brackets + RGB split N
+  - SplashNetflix: Beam convergence + SVG N logo + shine sweep
+  - SplashiOS: iOS-style springy app icon with SF Pro typeface feel
+  - SplashWindows: Windows 11 colored tiles + 5-dot loader
+  - SplashApple: Path-drawn N + Apple progress bar
+  - SplashHUD: Enhanced radar (3 blips, sweep gradient) + 8-line boot log
+  - SplashGlitch: Noise texture + intense RGB split → clean settle
+  - SplashAurora: 6 dynamic orbs + aurora band + 55-star field
+  - SplashRetro: 9-step CRT boot with vignette
+  - SplashVaporwave: Denser star field, 7-stripe sun, larger perspective grid
+  - SplashFire: Canvas cellular automaton fire + 28 particle embers
+  - SplashIce: 9 ice crystal shards + 38 frost particles + glowing N logo
+  - SplashNeon: Letter-by-letter reveal + border flicker + floor reflection
+- **New Sidebar** (`src/components/Sidebar.tsx`):
+  - Active nav item color now follows `logoColor` (no more hardcoded indigo)
+  - `motion.div` animated width transition (no CSS transition hack)
+  - Smooth active indicator using `layoutId` for background + dot
+  - Section groupings: Principal / Outils / Compte with label/divider
+  - Tooltips on collapsed state for ALL items including Lock/Logout
+  - Pin/PinOff icons, `motion.button` pin toggle with opacity animation
+  - User avatar border follows logoColor
+- **Discord gateway fixes** (`server/discord-gateway.ts`):
+  - Removed duplicate `nick` slash command definition
+  - Removed invalid `client.on("disconnect")` event (not valid in discord.js v14)
+  - Increased reconnect cap from 10 to 25 attempts
+  - Added 5 new slash commands: `/say`, `/poll`, `/giveaway`, `/emojis`, `/stickers`
+
 ## Key Notes
 - The `authenticateToken` middleware lives in `server/middleware/auth.ts` (extracted to avoid circular dependency between `auth.ts` routes and `logs.ts`)
 - SQLite database is used via `better-sqlite3`

@@ -348,20 +348,54 @@ const slashCommands = [
     .setDescription("Voir la liste des membres bannis")
     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
 
+  // ── Fun avancé ──
+  new SlashCommandBuilder()
+    .setName("say")
+    .setDescription("Fait dire quelque chose au bot dans un salon")
+    .addStringOption((o) =>
+      o.setName("message").setDescription("Le message à envoyer").setRequired(true)
+    )
+    .addChannelOption((o) =>
+      o.setName("salon").setDescription("Salon cible (défaut: actuel)").setRequired(false)
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+
+  new SlashCommandBuilder()
+    .setName("poll")
+    .setDescription("Crée un sondage rapide avec réactions")
+    .addStringOption((o) =>
+      o.setName("question").setDescription("La question du sondage").setRequired(true)
+    )
+    .addStringOption((o) =>
+      o.setName("choix").setDescription("Les options séparées par | (ex: Oui|Non|Peut-être)").setRequired(false)
+    ),
+
+  new SlashCommandBuilder()
+    .setName("giveaway")
+    .setDescription("Lance un giveaway dans ce salon")
+    .addStringOption((o) =>
+      o.setName("lot").setDescription("Ce qu'on gagne").setRequired(true)
+    )
+    .addIntegerOption((o) =>
+      o.setName("minutes").setDescription("Durée en minutes").setRequired(true).setMinValue(1).setMaxValue(10080)
+    )
+    .addIntegerOption((o) =>
+      o.setName("gagnants").setDescription("Nombre de gagnants (défaut: 1)").setRequired(false).setMinValue(1).setMaxValue(10)
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
+
+  new SlashCommandBuilder()
+    .setName("emojis")
+    .setDescription("Liste les emojis personnalisés du serveur"),
+
+  new SlashCommandBuilder()
+    .setName("stickers")
+    .setDescription("Liste les stickers personnalisés du serveur"),
+
   // ── Owner only ──
   new SlashCommandBuilder()
     .setName("backup")
     .setDescription("(Owner uniquement) Sauvegarde complète du serveur de A à Z"),
-
-  new SlashCommandBuilder()
-    .setName("nick")
-    .setDescription("(Owner uniquement) Change le pseudo d'un membre")
-    .addUserOption((o) =>
-      o.setName("membre").setDescription("Le membre cible").setRequired(true)
-    )
-    .addStringOption((o) =>
-      o.setName("pseudo").setDescription("Le nouveau pseudo (vide pour réinitialiser)").setRequired(false)
-    ),
 
   new SlashCommandBuilder()
     .setName("addrole")
@@ -1242,6 +1276,83 @@ async function handleInteraction(interaction: any) {
       }
     }
 
+    // ── say ──
+    else if (commandName === "say") {
+      const msg = interaction.options.getString("message", true);
+      const targetCh = (interaction.options.getChannel("salon") ?? interaction.channel) as TextChannel;
+      await (targetCh as TextChannel).send(msg);
+      await interaction.reply({ content: `✅ Message envoyé dans <#${targetCh.id}>.`, ephemeral: true });
+    }
+
+    // ── poll ──
+    else if (commandName === "poll") {
+      const question = interaction.options.getString("question", true);
+      const choixStr = interaction.options.getString("choix");
+      const options = choixStr ? choixStr.split("|").map((c) => c.trim()).filter(Boolean) : null;
+      const EMOJIS = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟"];
+      const embed = new EmbedBuilder()
+        .setColor(parseColor(null))
+        .setTitle(`📊 ${question}`)
+        .setFooter({ text: `Sondage lancé par ${interaction.user.username}` })
+        .setTimestamp();
+      if (options && options.length >= 2) {
+        embed.setDescription(options.map((opt, i) => `${EMOJIS[i]} ${opt}`).join("\n\n"));
+      }
+      await interaction.reply({ embeds: [embed] });
+      const msg = await interaction.fetchReply();
+      if (options && options.length >= 2) {
+        for (let i = 0; i < Math.min(options.length, 10); i++) {
+          await msg.react(EMOJIS[i]).catch(() => {});
+        }
+      } else {
+        await msg.react("👍").catch(() => {});
+        await msg.react("👎").catch(() => {});
+      }
+    }
+
+    // ── giveaway ──
+    else if (commandName === "giveaway") {
+      const lot = interaction.options.getString("lot", true);
+      const minutes = interaction.options.getInteger("minutes", true);
+      const gagnants = interaction.options.getInteger("gagnants") ?? 1;
+      const endTime = new Date(Date.now() + minutes * 60_000);
+      const embed = new EmbedBuilder()
+        .setColor(0xffd700)
+        .setTitle(`🎉 GIVEAWAY — ${lot}`)
+        .setDescription(`Réagis avec 🎉 pour participer !\n\n**Fin :** <t:${Math.floor(endTime.getTime() / 1000)}:R>\n**Gagnants :** ${gagnants}\n**Organisateur :** ${interaction.user}`)
+        .setFooter({ text: `Se termine dans ${minutes < 60 ? `${minutes}min` : `${Math.round(minutes / 60)}h`}` })
+        .setTimestamp(endTime);
+      await interaction.reply({ embeds: [embed] });
+      const msg = await interaction.fetchReply();
+      await msg.react("🎉").catch(() => {});
+    }
+
+    // ── emojis ──
+    else if (commandName === "emojis") {
+      if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
+      const emojis = guild.emojis.cache;
+      if (emojis.size === 0) return interaction.reply({ content: "Ce serveur n'a aucun emoji personnalisé.", ephemeral: true });
+      const list = emojis.map((e) => `${e} \`:${e.name}:\``).slice(0, 40).join(" ") + (emojis.size > 40 ? `\n*(+${emojis.size - 40} autres...)*` : "");
+      const embed = new EmbedBuilder()
+        .setColor(parseColor(null))
+        .setTitle(`😀 Emojis de ${guild.name} (${emojis.size})`)
+        .setDescription(list);
+      await interaction.reply({ embeds: [embed] });
+    }
+
+    // ── stickers ──
+    else if (commandName === "stickers") {
+      if (!guild) return interaction.reply({ content: "Serveur uniquement.", ephemeral: true });
+      const stickers = guild.stickers.cache;
+      if (stickers.size === 0) return interaction.reply({ content: "Ce serveur n'a aucun sticker personnalisé.", ephemeral: true });
+      const list = stickers.map((s) => `• **${s.name}**`).join("\n");
+      const embed = new EmbedBuilder()
+        .setColor(parseColor(null))
+        .setTitle(`🖼️ Stickers de ${guild.name} (${stickers.size})`)
+        .setDescription(list);
+      await interaction.reply({ embeds: [embed] });
+    }
+
     // ── nick (OWNER ONLY) ──
     else if (commandName === "nick") {
       if (!isOwner) return interaction.reply({ content: "Réservé au propriétaire.", ephemeral: true });
@@ -1447,8 +1558,8 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_DELAY = 60_000;
 
 async function scheduleReconnect(botToken: string) {
-  if (reconnectAttempts >= 10) {
-    console.error("[Discord] Trop de tentatives de reconnexion, abandon.");
+  if (reconnectAttempts >= 25) {
+    console.error("[Discord] Trop de tentatives de reconnexion, abandon définitif.");
     return;
   }
   reconnectAttempts++;
@@ -1488,12 +1599,6 @@ async function connectGateway(botToken: string) {
 
     client.on("error", (err) => {
       console.error("[Discord] Erreur gateway:", err.message);
-    });
-
-    client.on("disconnect" as any, () => {
-      console.warn("[Discord] Déconnecté du gateway.");
-      gatewayReady = false;
-      scheduleReconnect(botToken);
     });
 
     client.on("shardDisconnect" as any, (_event: any, shardId: number) => {
