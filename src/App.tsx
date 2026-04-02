@@ -39,7 +39,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="flex min-h-screen bg-[#05050f] text-white"
+      className="flex h-screen overflow-hidden bg-[#05050f] text-white"
       style={{ backgroundImage: "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(79,110,247,0.12), transparent)" }}
     >
       <AnimatePresence>

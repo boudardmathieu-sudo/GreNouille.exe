@@ -159,17 +159,6 @@ export default function Discord() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const fetchConfigured = async () => {
-    try {
-      const res = await axios.get("/api/discord/configured");
-      setConfigured(res.data.configured);
-    } catch {
-      setConfigured(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchLogs = async (channelId?: string) => {
     try {
       const url = channelId ? `/api/discord/logs?channelId=${channelId}` : "/api/discord/logs";
@@ -195,25 +184,40 @@ export default function Discord() {
   };
 
   useEffect(() => {
-    fetchConfigured();
-    fetchBotInfo();
-    fetchGuilds();
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 20000);
-    return () => clearInterval(interval);
+    const init = async () => {
+      try {
+        const res = await axios.get("/api/discord/configured");
+        const isConfigured = res.data.configured as boolean;
+        setConfigured(isConfigured);
+        if (isConfigured) {
+          await Promise.all([fetchBotInfo(), fetchGuilds(), fetchLogs()]);
+        }
+      } catch {
+        setConfigured(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
   }, []);
 
   useEffect(() => {
-    if (!selectedGuild) return;
-    axios.get(`/api/discord/guild/${selectedGuild}/channels`).then((r) => setChannels(r.data)).catch(() => {});
-    axios.get(`/api/discord/guild/${selectedGuild}/members`).then((r) => setMembers(r.data)).catch(() => {});
-  }, [selectedGuild]);
+    if (configured !== true) return;
+    const interval = setInterval(() => fetchLogs(selectedChannel || undefined), 20000);
+    return () => clearInterval(interval);
+  }, [configured, selectedChannel]);
 
   useEffect(() => {
-    if (selectedGuild && activeTab === "warnings") {
+    if (!selectedGuild || configured !== true) return;
+    axios.get(`/api/discord/guild/${selectedGuild}/channels`).then((r) => setChannels(r.data)).catch(() => {});
+    axios.get(`/api/discord/guild/${selectedGuild}/members`).then((r) => setMembers(r.data)).catch(() => {});
+  }, [selectedGuild, configured]);
+
+  useEffect(() => {
+    if (selectedGuild && activeTab === "warnings" && configured === true) {
       axios.get(`/api/discord/commands/warnings?guildId=${selectedGuild}`).then((r) => setWarnings(r.data)).catch(() => {});
     }
-  }, [selectedGuild, activeTab]);
+  }, [selectedGuild, activeTab, configured]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -285,6 +289,14 @@ export default function Discord() {
   };
 
   const selectedMemberObj = members.find((m) => m.id === selectedMember);
+
+  if (configured === null) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#5865F2]" />
+      </div>
+    );
+  }
 
   if (configured === false) {
     return (
