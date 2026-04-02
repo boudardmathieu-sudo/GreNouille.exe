@@ -15,7 +15,7 @@
 
 ## 🔍 What is this?
 
-Nexus is a **private dashboard** built to give you full visibility and control over your digital ecosystem — Spotify, Discord, AI assistant, analytics and more — all in one sleek interface.
+Nexus is a **private dashboard** built to give you full visibility and control over your digital ecosystem — Spotify, Discord, analytics and more — all in one sleek interface.
 
 No bloat. No ads. No nonsense. Just your data, your way.
 
@@ -29,7 +29,7 @@ Think of it as your own **F.R.I.D.A.Y.** — always on, always watching, always 
 |---|---|
 | 🎵 **Spotify** | Suivi de ta musique en temps réel, stats d'écoute et historique |
 | 🤖 **Discord Bot** | Gestion de serveur, commandes slash, sondages, giveaways |
-| 🧠 **IA Gemini** | Assistant Google Gemini intégré directement dans le panel |
+| 🧠 **IA locale** | Assistant IA maison — construit de zéro, pas emprunté |
 | 📊 **Analytics** | Métriques système et graphiques d'utilisation |
 | 📋 **Logs** | Viewer complet des logs serveur |
 | 🔐 **Auth** | Authentification sécurisée via Supabase |
@@ -46,14 +46,14 @@ Think of it as your own **F.R.I.D.A.Y.** — always on, always watching, always 
 - **Auth** — Supabase (JWT-based)
 - **Database** — SQLite via better-sqlite3
 - **Discord** — discord.js 14, gateway persistant avec reconnexion automatique
-- **AI** — Google Gemini AI SDK
-- **Hosting** — Replit
+- **IA** — Moteur maison, entraîné et servi en interne
+- **Hosting** — Vercel
 
 ---
 
 ## 🔑 Variables d'environnement
 
-Le panel attend les secrets suivants (configurés dans Replit Secrets) :
+Le panel attend les variables suivantes (à configurer dans le dashboard Vercel) :
 
 ```env
 # Supabase
@@ -71,9 +71,6 @@ SPOTIFY_CLIENT_SECRET=
 # Discord
 DISCORD_BOT_TOKEN=
 DISCORD_CHANNEL_ID=
-
-# Google Gemini
-GEMINI_API_KEY=
 
 # App
 APP_URL=
