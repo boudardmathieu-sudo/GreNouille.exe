@@ -9,15 +9,13 @@
 
 🇫🇷 *Interface entièrement en français*
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com)
-
 </div>
 
 ---
 
 ## 🔍 What is this?
 
-Nexus is a **private dashboard** built to give you full visibility and control over your digital ecosystem — Spotify, Discord, system analytics and more — all in one sleek interface.
+Nexus is a **private dashboard** built to give you full visibility and control over your digital ecosystem — Spotify, Discord, AI assistant, analytics and more — all in one sleek interface.
 
 No bloat. No ads. No nonsense. Just your data, your way.
 
@@ -29,70 +27,59 @@ Think of it as your own **F.R.I.D.A.Y.** — always on, always watching, always 
 
 | Feature | Description |
 |---|---|
-| 🎵 **Spotify** | Track your listening activity and stats |
-| 🎮 **Discord** | Monitor your server and activity |
-| 📊 **Analytics** | System metrics and usage graphs |
-| 📋 **Logs** | Full system log viewer |
-| 🔐 **Auth** | Secure login via Supabase |
-| 🗄️ **Database** | Local SQLite storage + admin panel |
+| 🎵 **Spotify** | Suivi de ta musique en temps réel, stats d'écoute et historique |
+| 🤖 **Discord Bot** | Gestion de serveur, commandes slash, sondages, giveaways |
+| 🧠 **IA Gemini** | Assistant Google Gemini intégré directement dans le panel |
+| 📊 **Analytics** | Métriques système et graphiques d'utilisation |
+| 📋 **Logs** | Viewer complet des logs serveur |
+| 🔐 **Auth** | Authentification sécurisée via Supabase |
+| 🗄️ **Database** | Stockage SQLite local + panneau d'administration |
+| 🎨 **Thèmes** | 18+ splash screens animés, 14 couleurs de logo, styles personnalisables |
+| 🧩 **Widgets** | Horloge, calendrier, mini-player Spotify, stats système, citations |
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend** — React 19, Tailwind CSS 4, React Router 7, Recharts, Motion
-- **Backend** — Node.js, Express
+- **Frontend** — React 19, Tailwind CSS 4, React Router 7, Recharts, Motion (Framer Motion)
+- **Backend** — Node.js, Express, TypeScript (full-stack via tsx)
 - **Auth** — Supabase (JWT-based)
 - **Database** — SQLite via better-sqlite3
-- **Hosting** — Vercel
-- **Language** — TypeScript (full-stack)
+- **Discord** — discord.js 14, gateway persistant avec reconnexion automatique
+- **AI** — Google Gemini AI SDK
+- **Hosting** — Replit
 
 ---
 
-## 🚀 Run Locally
+## 🔑 Variables d'environnement
 
-**Prerequisites:** Node.js 18+
-
-### 1. Clone & install
-
-```bash
-npm install
-```
-
-### 2. Set up environment variables
-
-Create a `.env` file at the root:
+Le panel attend les secrets suivants (configurés dans Replit Secrets) :
 
 ```env
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-JWT_SECRET=your_jwt_secret
+# Supabase
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
-# Optional integrations
-SPOTIFY_CLIENT_ID=...
-SPOTIFY_CLIENT_SECRET=...
-DISCORD_TOKEN=...
+# Auth
+JWT_SECRET=
+
+# Spotify (OAuth)
+SPOTIFY_CLIENT_ID=
+SPOTIFY_CLIENT_SECRET=
+
+# Discord
+DISCORD_BOT_TOKEN=
+DISCORD_CHANNEL_ID=
+
+# Google Gemini
+GEMINI_API_KEY=
+
+# App
+APP_URL=
 ```
 
-### 3. Start the dev server
-
-```bash
-npm run dev
-```
-
-The panel will be live at → [http://localhost:5000](http://localhost:5000)
-
----
-
-## ☁️ Deploy to Vercel
-
-1. Push your code to GitHub
-2. Import the repo on [vercel.com](https://vercel.com)
-3. Add your environment variables in the Vercel dashboard
-4. Deploy — Vercel handles the rest
-
-The `vercel.json` at the root is already configured. No extra setup needed.
+Toutes les intégrations sont optionnelles — le panel démarre sans elles, les fonctionnalités correspondantes sont simplement désactivées.
 
 ---
 
@@ -100,20 +87,58 @@ The `vercel.json` at the root is already configured. No extra setup needed.
 
 ```
 nexus/
-├── server.ts           # Express + Vite entry point
+├── server.ts               # Express + Vite entry point (port 5000)
 ├── server/
-│   ├── routes/         # API routes (auth, spotify, discord, logs...)
-│   ├── middleware/     # JWT auth middleware
-│   ├── db.ts           # SQLite setup & migrations
-│   └── lib/            # Server utilities (Supabase admin)
+│   ├── routes/             # API routes (auth, spotify, discord, logs, analytics...)
+│   ├── middleware/         # JWT auth middleware
+│   ├── discord-gateway.ts  # Discord bot gateway persistant
+│   ├── db.ts               # SQLite setup & migrations
+│   └── lib/                # Supabase admin, utilitaires serveur
 ├── src/
-│   ├── pages/          # React pages (Dashboard, Analytics, Spotify...)
-│   ├── components/     # Reusable UI components
-│   ├── context/        # Auth context
-│   └── lib/            # Frontend utilities & Supabase client
+│   ├── pages/              # React pages (Dashboard, Analytics, Spotify, Discord...)
+│   ├── components/         # UI components (Sidebar, MobileNav, splash screens...)
+│   ├── context/            # Auth & Spotify context providers
+│   └── lib/                # Frontend utilities, theme, Supabase client
 └── data/
-    └── nexus.db        # Local SQLite database
+    └── nexus.db            # Base SQLite locale
 ```
+
+---
+
+## 🎬 Splash Screens
+
+18 écrans de démarrage animés au choix, dont :
+
+- **Nexus** — grille de particules canvas
+- **Matrix** — pluie matricielle + boot log terminal
+- **Cyberpunk** — glitch RGB + brackets néon
+- **Netflix** — convergence de faisceaux + sweep lumineux
+- **Apple** — barre de progression style macOS
+- **HUD** — radar rotatif + boot log animé
+- **Fire** — automate cellulaire canvas + braises
+- **Ice** — cristaux de glace + particules de givre
+- **Neon** — révélation lettre par lettre avec reflet au sol
+- *...et bien d'autres*
+
+---
+
+## 🤖 Discord Bot — Commandes slash
+
+| Commande | Description |
+|---|---|
+| `/help` | Liste toutes les commandes disponibles |
+| `/info` | Infos sur le serveur |
+| `/userinfo` | Infos sur un membre |
+| `/say` | Envoie un message dans un salon |
+| `/poll` | Lance un sondage avec réactions |
+| `/giveaway` | Organise un giveaway |
+| `/emojis` | Liste les emojis personnalisés du serveur |
+| `/stickers` | Liste les stickers du serveur |
+| `/backup` | Génère un backup JSON complet du serveur (DM) |
+| `/nick` | Change le pseudo d'un membre |
+| `/embed` | Crée un embed personnalisé |
+| `/announce` | Publie une annonce |
+| *+ autres* | Modération, musique, utilitaires... |
 
 ---
 
