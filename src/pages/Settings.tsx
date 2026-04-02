@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Settings as SettingsIcon, Bell, Lock, Palette, Trash2, Check, Sparkles, Eye, ChevronDown, ChevronUp, X } from "lucide-react";
-import { type SplashTheme, SPLASH_KEY, SPLASH_ENABLED_KEY, renderSplash } from "../components/Splashscreen";
+import { type SplashTheme, renderSplash } from "../components/splashscreens/renderSplash";
+import { SPLASH_KEY, SPLASH_ENABLED_KEY } from "../components/Splashscreen";
 
 const SETTINGS_KEY = "nexus-settings";
 
@@ -253,6 +254,100 @@ const SPLASH_OPTIONS: { id: SplashTheme; label: string; description: string; pre
           ))}
           <span className="text-[8px] font-bold mt-1" style={{ color: "#00ff3c", textShadow: "0 0 8px rgba(0,255,60,0.6)" }}>NEXUS READY.</span>
         </div>
+      </div>
+    ),
+  },
+  {
+    id: "tiktok" as SplashTheme,
+    label: "TikTok",
+    description: "Logo décalé R/G/B style TikTok",
+    preview: (
+      <div className="w-full h-full bg-black flex items-center justify-center rounded-xl overflow-hidden">
+        <div className="relative select-none">
+          <span className="absolute text-lg font-black" style={{ fontFamily: "'Arial Black', sans-serif", color: "#25F4EE", left: -3, top: 0, opacity: 0.85, mixBlendMode: "screen" }}>NEXUS</span>
+          <span className="absolute text-lg font-black" style={{ fontFamily: "'Arial Black', sans-serif", color: "#FE2C55", left: 3, top: 0, opacity: 0.85, mixBlendMode: "screen" }}>NEXUS</span>
+          <span className="text-lg font-black" style={{ fontFamily: "'Arial Black', sans-serif", color: "#ffffff" }}>NEXUS</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "neon" as SplashTheme,
+    label: "Néon",
+    description: "Enseigne néon multicolore",
+    preview: (
+      <div className="w-full h-full flex items-center justify-center rounded-xl overflow-hidden" style={{ background: "#08000f" }}>
+        <div className="flex items-center gap-0.5 px-3 py-2 rounded-lg" style={{ border: "1px solid rgba(255,0,170,0.35)", boxShadow: "0 0 8px rgba(255,0,170,0.2)" }}>
+          {["N","E","X","U","S"].map((l, i) => (
+            <span key={i} className="text-sm font-black" style={{
+              fontFamily: "'Arial Black', Impact, sans-serif",
+              color: ["#ff00aa","#ff6600","#ffee00","#00ff88","#00aaff"][i],
+              textShadow: `0 0 6px ${["#ff00aa","#ff6600","#ffee00","#00ff88","#00aaff"][i]}`,
+            }}>{l}</span>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "vaporwave" as SplashTheme,
+    label: "Vaporwave",
+    description: "Synthwave rétro-futuriste",
+    preview: (
+      <div className="w-full h-full rounded-xl overflow-hidden relative flex flex-col items-center justify-center" style={{ background: "linear-gradient(180deg, #0d0221 0%, #2d1155 100%)" }}>
+        <div className="absolute" style={{ top: "15%", left: "50%", transform: "translateX(-50%)", width: 32, height: 32 }}>
+          <div className="w-full h-full rounded-full" style={{ background: "linear-gradient(180deg, #ffdd00, #ff6600, #ff0080)", position: "relative", overflow: "hidden" }}>
+            {[0,1,2].map(i => <div key={i} className="absolute left-0 right-0 bg-black" style={{ top: `${55+i*14}%`, height: 3 }} />)}
+          </div>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0" style={{ height: "45%", background: "repeating-linear-gradient(0deg, rgba(255,0,200,0.12) 0px, rgba(255,0,200,0.12) 1px, transparent 1px, transparent 8px)" }} />
+        <span className="relative z-10 text-[10px] font-black tracking-widest mt-8" style={{ fontFamily: "'Arial Black'", background: "linear-gradient(90deg, #ff71ce, #b967ff, #05ffa1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>NEXUS</span>
+      </div>
+    ),
+  },
+  {
+    id: "gold" as SplashTheme,
+    label: "Or",
+    description: "Luxe & élégance dorée",
+    preview: (
+      <div className="w-full h-full bg-[#0a0700] flex items-center justify-center rounded-xl">
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(145deg, #1a1300, #2a1f00)", border: "1px solid rgba(212,175,55,0.4)", boxShadow: "0 0 10px rgba(212,175,55,0.2)" }}>
+            <span className="text-base font-black" style={{ fontFamily: "'Georgia', serif", background: "linear-gradient(180deg, #f8e08e, #d4af37)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>N</span>
+          </div>
+          <span className="text-[8px] tracking-widest font-black" style={{ fontFamily: "'Georgia', serif", background: "linear-gradient(90deg, #d4af37, #f8e08e, #d4af37)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>NEXUS</span>
+          <div className="flex items-center gap-1">
+            <div className="h-px w-5" style={{ background: "linear-gradient(90deg, transparent, #d4af37)" }} />
+            <div className="w-0.5 h-0.5 rounded-full" style={{ background: "#d4af37" }} />
+            <div className="h-px w-5" style={{ background: "linear-gradient(90deg, #d4af37, transparent)" }} />
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "fire" as SplashTheme,
+    label: "Feu",
+    description: "Flammes & braises animées",
+    preview: (
+      <div className="w-full h-full bg-[#0a0100] flex items-center justify-center rounded-xl overflow-hidden relative">
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-16 rounded-full" style={{ background: "radial-gradient(ellipse, rgba(255,80,0,0.5) 0%, rgba(200,20,0,0.2) 50%, transparent 75%)", filter: "blur(8px)" }} />
+        <span className="relative z-10 text-sm font-black" style={{ fontFamily: "'Arial Black'", background: "linear-gradient(180deg, #fff7aa, #ffcc00, #ff6600, #cc2200)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", filter: "drop-shadow(0 0 6px rgba(255,100,0,0.8))" }}>NEXUS</span>
+      </div>
+    ),
+  },
+  {
+    id: "ice" as SplashTheme,
+    label: "Glace",
+    description: "Cristaux de glace & froideur",
+    preview: (
+      <div className="w-full h-full rounded-xl overflow-hidden flex items-center justify-center relative" style={{ background: "linear-gradient(180deg, #000a14, #001a2e)" }}>
+        <div className="absolute bottom-0 left-0 right-0 h-8 flex justify-around items-end">
+          {[30,48,24,40,28].map((h, i) => (
+            <div key={i} className="w-2" style={{ height: h, background: "linear-gradient(180deg, rgba(150,230,255,0.15), rgba(100,200,255,0.08))", clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)", border: "1px solid rgba(150,230,255,0.12)" }} />
+          ))}
+        </div>
+        <span className="relative z-10 text-[10px] font-black tracking-widest" style={{ fontFamily: "'Georgia', serif", background: "linear-gradient(180deg, #e8f8ff, #60c0ff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", filter: "drop-shadow(0 0 6px rgba(100,200,255,0.6))" }}>NEXUS</span>
       </div>
     ),
   },
