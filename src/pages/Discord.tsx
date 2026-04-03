@@ -5,7 +5,7 @@ import {
   Send, MessageSquare, Terminal, Activity, AlertTriangle, ExternalLink,
   Bot, Wifi, Settings2, Sword, Hash, ChevronDown, Loader2, Check, X,
   ShieldAlert, UserX, VolumeX, Volume2, AlertCircle, Trash2,
-  Download, RefreshCw, Crown, BookOpen, Smile, Shield, Megaphone, Info,
+  Download, RefreshCw, Crown, BookOpen, Smile, Shield, Megaphone, Info, Sparkles,
 } from "lucide-react";
 
 type Tab = "chat" | "bot" | "commands" | "warnings" | "slash";
@@ -46,6 +46,7 @@ const SLASH_CATEGORIES = [
       { name: "/rolelist", desc: "Liste des rôles du serveur" },
       { name: "/channellist", desc: "Liste des salons" },
       { name: "/membercount", desc: "Nombre de membres" },
+      { name: "/panelstats", desc: "Stats en temps réel du panel Nexus (CPU, RAM, ping...)" },
     ],
   },
   {
@@ -59,7 +60,7 @@ const SLASH_CATEGORIES = [
       { name: "/coinflip", desc: "Pile ou face" },
       { name: "/roll", desc: "Lance un dé (faces personnalisables)" },
       { name: "/8ball", desc: "La boule magique répond" },
-      { name: "/choix", desc: "Choisit parmi plusieurs options" },
+      { name: "/choix", desc: "Choisit parmi plusieurs options (séparées par des virgules)" },
       { name: "/pp", desc: "Mesure très scientifique 📏" },
       { name: "/hug", desc: "Envoie un câlin à quelqu'un" },
       { name: "/slap", desc: "Balance une claque" },
@@ -76,9 +77,13 @@ const SLASH_CATEGORIES = [
     bg: "bg-purple-500/10",
     border: "border-purple-500/20",
     commands: [
-      { name: "/embed", desc: "Envoie un message embed stylé" },
-      { name: "/poll", desc: "Lance un sondage avec réactions" },
-      { name: "/announce", desc: "Annonce officielle dans un salon" },
+      { name: "/say", desc: "Le bot répète ton message dans un salon (ManageMessages)" },
+      { name: "/embed", desc: "Envoie un message embed stylé (ManageMessages)" },
+      { name: "/poll", desc: "Lance un sondage avec réactions (options séparées par |)" },
+      { name: "/announce", desc: "Annonce officielle dans un salon (ManageMessages)" },
+      { name: "/giveaway", desc: "Lance un giveaway dans ce salon (ManageEvents)" },
+      { name: "/emojis", desc: "Liste les emojis personnalisés du serveur" },
+      { name: "/stickers", desc: "Liste les stickers personnalisés du serveur" },
     ],
   },
   {
@@ -89,21 +94,39 @@ const SLASH_CATEGORIES = [
     bg: "bg-red-500/10",
     border: "border-red-500/20",
     commands: [
-      { name: "/ban", desc: "Bannit un membre" },
-      { name: "/kick", desc: "Expulse un membre" },
-      { name: "/mute", desc: "Timeout un membre (durée en minutes)" },
-      { name: "/unmute", desc: "Retire le timeout" },
-      { name: "/warn", desc: "Avertit et enregistre un warn" },
-      { name: "/warns", desc: "Voir les warns d'un membre" },
-      { name: "/clearwarns", desc: "Efface tous les warns d'un membre" },
-      { name: "/clear", desc: "Supprime des messages en masse (1-100)" },
-      { name: "/slowmode", desc: "Mode lent sur un salon" },
-      { name: "/lock", desc: "Verrouille un salon" },
-      { name: "/unlock", desc: "Déverrouille un salon" },
-      { name: "/role", desc: "Ajoute ou retire un rôle" },
-      { name: "/nick", desc: "Change le surnom d'un membre" },
-      { name: "/unban", desc: "Débannit via ID utilisateur" },
-      { name: "/banlist", desc: "Liste des membres bannis" },
+      { name: "/ban", desc: "Bannit un membre (BanMembers)" },
+      { name: "/kick", desc: "Expulse un membre (KickMembers)" },
+      { name: "/mute", desc: "Timeout un membre en minutes (ModerateMembers)" },
+      { name: "/unmute", desc: "Retire le timeout (ModerateMembers)" },
+      { name: "/warn", desc: "Avertit et enregistre un warn (ModerateMembers)" },
+      { name: "/warns", desc: "Voir les warns d'un membre (ModerateMembers)" },
+      { name: "/clearwarns", desc: "Efface tous les warns d'un membre (ModerateMembers)" },
+      { name: "/clear", desc: "Supprime des messages en masse 1-100 (ManageMessages)" },
+      { name: "/slowmode", desc: "Mode lent sur le salon actuel (ManageChannels)" },
+      { name: "/lock", desc: "Verrouille un salon (ManageChannels)" },
+      { name: "/unlock", desc: "Déverrouille un salon (ManageChannels)" },
+      { name: "/role", desc: "Ajoute ou retire un rôle à un membre (ManageRoles)" },
+      { name: "/nick", desc: "Change le surnom d'un membre (ManageNicknames)" },
+      { name: "/unban", desc: "Débannit via ID utilisateur (BanMembers)" },
+      { name: "/banlist", desc: "Liste des membres bannis (BanMembers)" },
+    ],
+  },
+  {
+    id: "ai",
+    label: "IA Nexus",
+    icon: Sparkles,
+    color: "text-cyan-400",
+    bg: "bg-cyan-500/10",
+    border: "border-cyan-500/20",
+    commands: [
+      { name: "/ask", desc: "Pose une question à l'IA Nexus" },
+      { name: "/code", desc: "Aide pour du code (debug, explications, génération)" },
+      { name: "/traduction", desc: "Traduit un texte dans la langue de ton choix" },
+      { name: "/resume", desc: "Résume un texte long en quelques phrases" },
+      { name: "/meteo", desc: "Météo d'une ville via IA (pas d'API externe)" },
+      { name: "/roast", desc: "Roast humoristique et amical d'un membre" },
+      { name: "/compliment", desc: "Génère un compliment pour quelqu'un" },
+      { name: "/histoire", desc: "Invente une courte histoire sur un thème" },
     ],
   },
   {
@@ -114,8 +137,16 @@ const SLASH_CATEGORIES = [
     bg: "bg-amber-500/10",
     border: "border-amber-500/20",
     commands: [
-      { name: "/say", desc: "Le bot parle, ton message disparaît instantanément" },
       { name: "/backup", desc: "Sauvegarde complète du serveur de A à Z (envoi en DM)" },
+      { name: "/nuke", desc: "Recrée un salon (supprime tout l'historique)" },
+      { name: "/lockdown", desc: "Verrouille ou déverrouille TOUS les salons texte" },
+      { name: "/massrole", desc: "Donne ou retire un rôle à TOUS les membres" },
+      { name: "/addrole", desc: "Donne un rôle à un membre spécifique" },
+      { name: "/removerole", desc: "Retire un rôle d'un membre spécifique" },
+      { name: "/dm", desc: "Envoie un DM privé à un membre" },
+      { name: "/ghostping", desc: "Envoie et supprime immédiatement un ping" },
+      { name: "/setslowmode", desc: "Définit le slowmode sur n'importe quel salon" },
+      { name: "/status", desc: "Change le statut et l'activité du bot" },
     ],
   },
 ];
@@ -512,26 +543,31 @@ export default function Discord() {
                   </div>
                 ))}
                 <div className="flex items-center justify-between rounded-xl bg-black/20 px-4 py-3">
-                  <span className="text-sm text-gray-400">Gateway</span>
+                  <span className="text-sm text-gray-400">Gateway WebSocket</span>
                   <div className="flex items-center gap-2">
                     {botInfo.gatewayStatus?.connecting ? (
                       <span className="flex items-center gap-1.5 text-sm font-medium text-yellow-400">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Connexion...
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Connexion en cours…
                       </span>
                     ) : botInfo.gatewayReady ? (
                       <span className="flex items-center gap-1.5 text-sm font-medium text-green-400">
-                        <span className="h-2 w-2 rounded-full bg-green-400" /> Connecté
+                        <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" /> Connecté
                       </span>
                     ) : (
                       <span className="flex items-center gap-1.5 text-sm font-medium text-orange-400">
-                        <span className="h-2 w-2 rounded-full bg-orange-400" /> REST uniquement
+                        <span className="h-2 w-2 rounded-full bg-orange-400" /> Non connecté
                       </span>
                     )}
                   </div>
                 </div>
-                {!botInfo.gatewayStatus?.privilegedIntents && (
+                {botInfo.gatewayStatus?.reconnectAttempts > 0 && !botInfo.gatewayReady && (
+                  <div className="rounded-xl bg-orange-500/10 border border-orange-500/20 px-4 py-2.5 text-xs text-orange-400">
+                    🔄 Tentatives de reconnexion : {botInfo.gatewayStatus.reconnectAttempts} / 20
+                  </div>
+                )}
+                {!botInfo.gatewayStatus?.privilegedIntents && botInfo.gatewayReady && (
                   <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/20 px-4 py-2.5 text-xs text-yellow-400">
-                    ⚠️ Intents basiques — active les privileged intents dans le portail Discord Developer pour les slash commands avancés.
+                    ⚠️ Intents basiques — active les Privileged Gateway Intents dans le portail Discord Developer pour les fonctionnalités avancées.
                   </div>
                 )}
               </div>
@@ -592,20 +628,18 @@ export default function Discord() {
               </button>
 
               {!botInfo?.gatewayReady && (
-                <div className="space-y-2">
-                  <p className="text-xs text-yellow-400/70 text-center">
-                    ⚠️ Le changement de statut nécessite une connexion Gateway.
-                  </p>
-                  <button
-                    onClick={handleForceReconnect}
-                    disabled={reconnecting}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-medium text-orange-400 hover:bg-orange-500/20 disabled:opacity-50 transition-colors"
-                  >
-                    {reconnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    {reconnecting ? "Reconnexion en cours..." : "Forcer la reconnexion Gateway"}
-                  </button>
-                </div>
+                <p className="text-xs text-yellow-400/70 text-center">
+                  ⚠️ Le changement de statut nécessite une connexion Gateway active.
+                </p>
               )}
+              <button
+                onClick={handleForceReconnect}
+                disabled={reconnecting}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 ${botInfo?.gatewayReady ? "border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white" : "border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20"}`}
+              >
+                {reconnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                {reconnecting ? "Reconnexion en cours..." : botInfo?.gatewayReady ? "Reconnecter le Gateway" : "Forcer la reconnexion Gateway"}
+              </button>
             </div>
           </motion.div>
         </div>

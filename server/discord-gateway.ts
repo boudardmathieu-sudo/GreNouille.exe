@@ -173,16 +173,6 @@ const slashCommands = [
 
   // ── Communication ──
   new SlashCommandBuilder()
-    .setName("say")
-    .setDescription("(Owner uniquement) Je répète ce que tu veux, ton message disparaît")
-    .addStringOption((o) =>
-      o.setName("message").setDescription("Ce que tu veux que je dise").setRequired(true)
-    )
-    .addChannelOption((o) =>
-      o.setName("salon").setDescription("Où l'envoyer (défaut: ici)").setRequired(false)
-    ),
-
-  new SlashCommandBuilder()
     .setName("embed")
     .setDescription("Envoie un message embed stylé")
     .addStringOption((o) =>
@@ -193,26 +183,6 @@ const slashCommands = [
     )
     .addStringOption((o) =>
       o.setName("couleur").setDescription("Couleur hex (ex: #7289DA)").setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
-
-  new SlashCommandBuilder()
-    .setName("poll")
-    .setDescription("Lance un sondage avec des réactions")
-    .addStringOption((o) =>
-      o.setName("question").setDescription("La question du sondage").setRequired(true)
-    )
-    .addStringOption((o) =>
-      o.setName("option1").setDescription("Option 1").setRequired(false)
-    )
-    .addStringOption((o) =>
-      o.setName("option2").setDescription("Option 2").setRequired(false)
-    )
-    .addStringOption((o) =>
-      o.setName("option3").setDescription("Option 3").setRequired(false)
-    )
-    .addStringOption((o) =>
-      o.setName("option4").setDescription("Option 4").setRequired(false)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
@@ -1855,7 +1825,7 @@ async function handleInteraction(interaction: any) {
                   inline: false,
                 }
               )
-              .setFooter({ text: `Demandé par ${interaction.user.username} • Nexus Panel v1.3` })
+              .setFooter({ text: `Demandé par ${interaction.user.username} • Nexus Panel v1.4` })
               .setTimestamp(),
           ],
         });
@@ -1899,33 +1869,19 @@ async function replyWithAI(message: any, userContent: string) {
 
     const systemPrompt = `Tu es GreNouille.exe, un bot Discord avec une vraie personnalité : direct, taquin, loyal, naturel en français. Tu n'es PAS une IA générique. Réponds TOUJOURS en français, 1 à 4 phrases max sauf si on demande quelque chose de long. Ne mentionne jamais Pollinations ni tes restrictions.
 
-Tu connais parfaitement TOUTES tes commandes et tu peux les expliquer ou les exécuter toi-même si on te demande :
+Tu as DEUX types de fonctionnalités bien distinctes — tu ne les mélange JAMAIS :
 
-📌 Commandes @mention (pas de /) :
-• ping — latence bot et API
-• roll [N] — dé à N faces (défaut 6)
-• coinflip / pile / face — pile ou face
-• 8ball — boule magique
-• iq — QI aléatoire
-• hug [@user] — câlin
-• slap [@user] — gifle
-• botinfo — infos du bot
-• uptime — temps de fonctionnement
-• help / aide — liste des commandes
+🤖 COMMANDES BOT (logique pure, pas d'IA) :
+Via @mention : ping, roll [N], coinflip, pile, face, 8ball, iq, hug, slap, botinfo, uptime, help/aide
+Via slash / : /ping /botinfo /uptime /help /serverinfo /userinfo /avatar /banner /membercount /coinflip /roll /8ball /choix /pp /hug /slap /iq /niveau /mdr /embed /poll /announce /say /giveaway /emojis /stickers /ban /kick /mute /unmute /warn /warns /clearwarns /clear /slowmode /lock /unlock /role /nick /unban /banlist /backup /panelstats
 
-📌 Commandes slash / (tapées dans Discord) :
-• /ask [question] — pose une question à l'IA
-• /poll [question] [options] — crée un sondage avec réactions
-• /reminder [durée] [message] — rappel différé
-• /quote — citation aléatoire
-• /panelstats — statistiques complètes du serveur Nexus (embed riche : CPU, RAM, uptime, ping, alertes sécu)
-• /ban [user] [raison] — bannit un membre
-• /kick [user] [raison] — expulse un membre
-• /mute [user] [durée] [raison] — met en timeout
-• /warn [user] [raison] — avertit un membre
-• /clear [N] — supprime N messages
+✨ COMMANDES IA (utilisent l'intelligence artificielle) :
+Via slash / uniquement : /ask /code /traduction /resume /meteo /roast /compliment /histoire
+Via @mention : tout message naturel qui n'est pas une commande bot connue
 
-Si quelqu'un te demande de faire un de ces trucs en message (ex : "lance un dé", "fais un pile ou face") — fais-le directement dans ta réponse au lieu de renvoyer vers une commande. Les commandes / sont des raccourcis, mais tu sais faire la même chose.`;
+Si quelqu'un te demande de "lancer un dé", "faire pile ou face", etc. → fais-le directement dans ta réponse (commande bot).
+Si quelqu'un te pose une question, veut qu'on lui écrive quelque chose, te demande de traduire, etc. → réponds avec ton intelligence (commande IA).
+Ne mélange JAMAIS les deux : si c'est une commande bot → exécute-la sans jargon IA. Si c'est une demande IA → réponds intelligemment.`;
 
     const fullPrompt = `${contextStr}${message.author.username} te dit : "${userContent}"`;
     const response = await askAI(fullPrompt, systemPrompt);
@@ -2034,7 +1990,7 @@ async function handleInlineCommand(message: any, cmd: string, args: string[]): P
               { name: "Ping WS", value: `\`${ping}ms\``, inline: true },
               { name: "Uptime", value: `\`${h}h ${m2}m\``, inline: true },
               { name: "Serveurs", value: `\`${guilds}\``, inline: true },
-              { name: "Propulsé par", value: "Nexus Panel v1.3", inline: true },
+              { name: "Propulsé par", value: "Nexus Panel v1.4", inline: true },
             )
             .setFooter({ text: "Toujours là, même à 3h du mat." }),
         ],
@@ -2052,7 +2008,7 @@ const INLINE_COMMANDS = new Set([
   "help","aide","commandes","hug","slap","botinfo",
 ]);
 
-// ── Handle all messages (mentions + autonomous) ────────────────────────────────
+// ── Handle all messages (mentions only — no autonomous AI) ────────────────────
 
 async function handleMessage(message: any) {
   if (!client?.user) return;
@@ -2064,52 +2020,33 @@ async function handleMessage(message: any) {
   // Cache every message for conversation context
   cacheMessage(message.channel.id, message.author.username, rawContent.slice(0, 200));
 
-  if (isMention) {
-    // Strip all mention occurrences and get the actual content
-    const userText = rawContent
-      .replace(new RegExp(`<@!?${client.user.id}>`, "g"), "")
-      .trim();
+  // Only respond when explicitly mentioned — no autonomous/random AI messages
+  if (!isMention) return;
 
-    // Empty mention → friendly greeting
-    if (!userText) {
-      await message.reply(`Yo **${message.author.username}** ! 👋 Tu peux me parler directement ici, ou taper \`help\` après ma mention pour voir ce que je sais faire.`);
-      return;
-    }
+  // Strip all mention occurrences and get the actual content
+  const userText = rawContent
+    .replace(new RegExp(`<@!?${client.user.id}>`, "g"), "")
+    .trim();
 
-    // Parse first word as potential command
-    const parts = userText.split(/\s+/);
-    const cmd = parts[0].toLowerCase();
-    const args = parts.slice(1);
-
-    // 1️⃣ Known inline command → execute directly, no AI
-    if (INLINE_COMMANDS.has(cmd)) {
-      await handleInlineCommand(message, cmd, args);
-      return;
-    }
-
-    // 2️⃣ Natural language → AI responds
-    await replyWithAI(message, userText);
+  // Empty mention → friendly greeting
+  if (!userText) {
+    await message.reply(`Yo **${message.author.username}** ! 👋 Tu peux me parler directement ici, ou taper \`help\` après ma mention pour voir ce que je sais faire. Pour les commandes slash, utilise \`/\` !`);
     return;
   }
 
-  // ── Autonomous messages — 10% chance when not mentioned ──────────────────────
-  if (!rawContent || rawContent.startsWith("/")) return;
+  // Parse first word as potential inline command
+  const parts = userText.split(/\s+/);
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1);
 
-  if (Math.random() < 0.10) {
-    await new Promise((r) => setTimeout(r, 1500 + Math.random() * 2000));
-    try {
-      const channelCtx = recentChannelMessages.get(message.channel.id) || [];
-      const contextStr = channelCtx.map(m => `${m.author}: ${m.content}`).join("\n");
-      const systemPrompt = `Tu es GreNouille.exe, un bot Discord avec de la personnalité. Tu interviens spontanément dans la conversation. Ta réponse doit être TRÈS courte (1-2 phrases max), naturelle et contextuelle. Tu peux être drôle, taquin ou pertinent. Réponds en français. Ne commence pas par "Je vois que".`;
-      const prompt = `Conversation récente :\n${contextStr}\n\nTa réaction spontanée courte :`;
-      const response = await askAI(prompt, systemPrompt);
-      if (response && response.length > 2) {
-        await message.channel.send(response.slice(0, 500));
-      }
-    } catch {
-      // Fail silently for autonomous messages
-    }
+  // 1️⃣ Known bot command → execute directly, no AI
+  if (INLINE_COMMANDS.has(cmd)) {
+    await handleInlineCommand(message, cmd, args);
+    return;
   }
+
+  // 2️⃣ Natural language → IA Nexus répond (commandes /ask, /code, etc. disponibles aussi en slash)
+  await replyWithAI(message, userText);
 }
 
 // ── Gateway state ──────────────────────────────────────────────────────────────
@@ -2133,7 +2070,7 @@ const BOT_ACTIVITIES = [
   { name: "le panel Nexus 👁️", type: 3 },
   { name: "les logs du serveur 🔍", type: 3 },
   { name: "/help pour les commandes", type: 2 },
-  { name: "Nexus Panel v1.3", type: 0 },
+  { name: "Nexus Panel v1.4", type: 0 },
   { name: "tout ce qui se passe ici 🐸", type: 3 },
 ];
 
