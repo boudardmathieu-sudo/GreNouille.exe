@@ -12,6 +12,8 @@ import databaseRoutes from "./server/routes/database.js";
 import logsRoutes from "./server/routes/logs.js";
 import analyticsRoutes from "./server/routes/analytics.js";
 import aiRoutes from "./server/routes/ai.js";
+import securityRoutes, { securityMiddleware } from "./server/routes/security.js";
+import challengeRoutes from "./server/routes/challenge.js";
 import { initDiscordGateway } from "./server/discord-gateway.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,6 +25,7 @@ async function startServer() {
   app.use(express.json({ limit: "15mb" }));
   app.use(express.urlencoded({ extended: true, limit: "15mb" }));
   app.use(cookieParser());
+  app.use(securityMiddleware);
 
   // Expose safe public config to the frontend (never expose server secrets here)
   app.get("/api/config", (_req, res) => {
@@ -40,6 +43,8 @@ async function startServer() {
   app.use("/api/logs", logsRoutes);
   app.use("/api/analytics", analyticsRoutes);
   app.use("/api/ai", aiRoutes);
+  app.use("/api/security", securityRoutes);
+  app.use("/api/challenge", challengeRoutes);
 
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
@@ -77,8 +82,8 @@ async function startServer() {
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
       (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null);
 
-    if (selfUrl && process.env.DISCORD_BOT_TOKEN) {
-      const KEEPALIVE_INTERVAL = 4 * 60 * 1000; // 4 minutes
+    if (selfUrl) {
+      const KEEPALIVE_INTERVAL = 2 * 60 * 1000; // 2 minutes — prevent idle on Replit/Vercel
       setInterval(async () => {
         try {
           const res = await fetch(`${selfUrl}/api/health`);
@@ -87,7 +92,7 @@ async function startServer() {
           console.warn("[Keepalive] Ping échoué:", err?.message);
         }
       }, KEEPALIVE_INTERVAL);
-      console.log(`[Keepalive] Actif — ping toutes les 4 minutes sur ${selfUrl}`);
+      console.log(`[Keepalive] Actif — ping toutes les 2 minutes sur ${selfUrl}`);
     }
   });
 

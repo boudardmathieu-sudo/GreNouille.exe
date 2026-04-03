@@ -94,6 +94,29 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS security_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    message TEXT NOT NULL,
+    ip TEXT,
+    userAgent TEXT,
+    userId INTEGER,
+    path TEXT,
+    severity TEXT DEFAULT 'info',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS user_scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    date TEXT NOT NULL,
+    correct INTEGER DEFAULT 0,
+    answered INTEGER DEFAULT 0,
+    UNIQUE(email, date)
+  );
+`);
+
 const migrations = [
   "ALTER TABLE users ADD COLUMN supabase_id TEXT",
   "ALTER TABLE users ADD COLUMN avatarUrl TEXT",

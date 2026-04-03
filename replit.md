@@ -91,6 +91,34 @@ Both Supabase clients are lazily initialized — the app starts without them, bu
 - **MobileNav updated**: Agenda + Widgets added, labels updated
 - **Discord gateway fixes**: Removed duplicate `/nick`, invalid disconnect event; added `/say`, `/poll`, `/giveaway`, `/emojis`, `/stickers`; reconnect cap 10 → 25
 
+## Version 1.3.0 — Phase 2 (Security, Challenge, Dashboard Refonte)
+- **Security monitoring** (`server/routes/security.ts`):
+  - `securityMiddleware` auto-logs failed auths and suspicious API calls
+  - `GET /api/security/events` — recent events log
+  - `GET /api/security/stats` — CPU%, RAM%, threat level, warning count, today's event count
+  - `POST /api/security/event` — manual event logging
+  - New DB table: `security_events` (type, message, ip, userAgent, userId, path, severity)
+- **Daily challenge system** (`server/routes/challenge.ts`):
+  - 30 rotating quotes (poets, anime, films, philosophers) — one per day by day-of-year
+  - `GET /api/challenge/today` — gets today's quote without revealing the answer
+  - `POST /api/challenge/answer` — submits answer (fuzzy match), saves by email in DB
+  - `GET /api/challenge/score?email=xxx` — cumulative score for a user
+  - New DB table: `user_scores` (email, date, correct, answered — UNIQUE per email+date)
+- **Dashboard complete redesign** (`src/pages/Dashboard.tsx`):
+  - Header with username + live clock/date in top-right corner
+  - Stats cards show CPU/RAM live (from security stats endpoint), security threat level
+  - `DailyChallengeWidget`: scrolling quote text with category badge (Anime/Film/Poème etc.), input bar to guess the source, +1 point if correct; saves by email (from auth); shows correct answer after submission; persists per-day in localStorage
+  - `SpotifyWidget` v2: large album art, scrolling track name + artist, prev/play-pause/next controls calling API endpoints, glowing progress bar
+  - `SecurityWidget`: threat level, today/warning counts, recent event list
+  - `SystemWidget` v2: CPU + RAM progress bars with live data from security/stats
+  - `ScrollingText` component: RAF-based smooth horizontal scroll for long text
+  - Default widgets: spotify, weather, security
+- **Discord `/panelstats` command**:
+  - Slash command returning a rich embed with: CPU/RAM bars, process uptime, bot ping/guild count, security alert count + threat level, last 5 system logs
+- **Keepalive improved** (`server.ts`):
+  - Now pings every 2 minutes (down from 4)
+  - No longer requires `DISCORD_BOT_TOKEN` to activate — runs whenever `REPLIT_DEV_DOMAIN` or `PUBLIC_URL` is set
+
 ## Key Notes
 - The `authenticateToken` middleware lives in `server/middleware/auth.ts` (extracted to avoid circular dependency between `auth.ts` routes and `logs.ts`)
 - SQLite database is used via `better-sqlite3`

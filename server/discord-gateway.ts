@@ -570,6 +570,10 @@ const slashCommands = [
     .addStringOption((o) =>
       o.setName("theme").setDescription("Le thème de l'histoire").setRequired(true)
     ),
+
+  new SlashCommandBuilder()
+    .setName("panelstats")
+    .setDescription("Affiche les statistiques du panel Nexus en temps réel 📊"),
 ].map((cmd) => cmd.toJSON());
 
 // ── Register slash commands ────────────────────────────────────────────────────
@@ -1767,6 +1771,96 @@ async function handleInteraction(interaction: any) {
         });
       } catch {
         await interaction.editReply({ content: "❌ Nexus AI n'est pas disponible." });
+      }
+    }
+
+    // ── panelstats ──
+    else if (commandName === "panelstats") {
+      await interaction.deferReply();
+      try {
+        const osModule = await import("os");
+        const totalMem = osModule.totalmem();
+        const freeMem = osModule.freemem();
+        const usedMem = totalMem - freeMem;
+        const memPercent = Math.round((usedMem / totalMem) * 100);
+        const loadAvg = osModule.loadavg()[0];
+        const cpuPercent = Math.min(100, Math.round(loadAvg * 25));
+        const uptimeSec = Math.floor(process.uptime());
+        const h = Math.floor(uptimeSec / 3600);
+        const m = Math.floor((uptimeSec % 3600) / 60);
+        const s = uptimeSec % 60;
+        const uptimeStr = `${h}h ${m}m ${s}s`;
+
+        const recentLogs = db.prepare(
+          "SELECT type, message, createdAt FROM system_logs ORDER BY createdAt DESC LIMIT 5"
+        ).all() as any[];
+
+        const secWarnings = (db.prepare(
+          "SELECT COUNT(*) as c FROM security_events WHERE severity = 'warning' AND createdAt >= datetime('now', '-1 day')"
+        ).get() as any)?.c || 0;
+
+        const logsText = recentLogs.length > 0
+          ? recentLogs.map(l => {
+              const icon = l.type === "error" ? "🔴" : l.type === "warning" ? "🟡" : l.type === "success" ? "🟢" : "🔵";
+              const time = new Date(l.createdAt).toLocaleTimeString("fr-FR");
+              return `${icon} \`${time}\` ${l.message.slice(0, 60)}`;
+            }).join("\n")
+          : "_Aucun log récent_";
+
+        const memBar = (pct: number) => {
+          const filled = Math.round(pct / 10);
+          return "█".repeat(filled) + "░".repeat(10 - filled) + ` ${pct}%`;
+        };
+
+        const botPing = client?.ws.ping ?? -1;
+        const guildCount = client?.guilds.cache.size ?? 0;
+
+        await interaction.editReply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0x39ff14)
+              .setTitle("📊 NEXUS PANEL — Statistiques en temps réel")
+              .setDescription("Voici l'état complet du panel Nexus :")
+              .addFields(
+                {
+                  name: "🖥️ Système",
+                  value: [
+                    `**CPU :** \`${memBar(cpuPercent)}\``,
+                    `**RAM :** \`${memBar(memPercent)}\` (${(usedMem / 1024 / 1024).toFixed(0)}MB / ${(totalMem / 1024 / 1024).toFixed(0)}MB)`,
+                    `**Plateforme :** \`${osModule.platform()} — ${osModule.arch()}\``,
+                    `**Uptime Process :** \`${uptimeStr}\``,
+                  ].join("\n"),
+                  inline: false,
+                },
+                {
+                  name: "🤖 Bot Discord",
+                  value: [
+                    `**Statut :** 🟢 En ligne`,
+                    `**Ping WS :** \`${botPing}ms\``,
+                    `**Serveurs :** \`${guildCount}\``,
+                  ].join("\n"),
+                  inline: true,
+                },
+                {
+                  name: "🔒 Sécurité",
+                  value: [
+                    `**Alertes (24h) :** \`${secWarnings}\``,
+                    `**Niveau :** ${secWarnings > 5 ? "🔴 ÉLEVÉ" : secWarnings > 1 ? "🟡 MOYEN" : "🟢 FAIBLE"}`,
+                  ].join("\n"),
+                  inline: true,
+                },
+                {
+                  name: "📋 Logs Récents",
+                  value: logsText,
+                  inline: false,
+                }
+              )
+              .setFooter({ text: `Demandé par ${interaction.user.username} • Nexus Panel v1.3` })
+              .setTimestamp(),
+          ],
+        });
+      } catch (err: any) {
+        await interaction.editReply({ content: `❌ Erreur lors de la récupération des stats : ${err.message}` });
       }
     }
 
