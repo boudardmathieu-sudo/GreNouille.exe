@@ -2148,15 +2148,51 @@ function scheduleReconnect(botToken: string) {
   setTimeout(() => connectGateway(botToken), delay);
 }
 
+// ── Welcome channel ────────────────────────────────────────────────────────────
+
+const WELCOME_CHANNEL_ID = process.env.DISCORD_WELCOME_CHANNEL_ID || "1489717640501919764";
+
+const WELCOME_MESSAGE = `🌴 Aloha ! Bienvenue chez Coco-Bay 🌴
+*Pose tes valises, prends un cocktail et profite de la vue sur le lagon.*
+
+Pour que ton séjour se passe au mieux, n'oublie pas de :
+
+Aller lire le <#1489717820081307748>  (promis, c'est rapide).
+
+Prendre tes accès dans <#1489719497618227341> .
+
+Venir dire un petit mot dans <#1489719652144910406> .
+
+Bonne détente parmi nous ! 🥥🍹`;
+
 // ── Connect ────────────────────────────────────────────────────────────────────
+
+// Timeout guard: if isConnecting stays true for more than 90s without resolving,
+// force-reset it so the next health check can attempt a fresh reconnect.
+let connectingTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
+
+function setConnecting(value: boolean) {
+  if (connectingTimeoutTimer) { clearTimeout(connectingTimeoutTimer); connectingTimeoutTimer = null; }
+  isConnecting = value;
+  if (value) {
+    connectingTimeoutTimer = setTimeout(() => {
+      if (isConnecting && !gatewayReady) {
+        console.warn("[Discord] ⚠️  Connexion bloquée depuis 90s — reset forcé.");
+        isConnecting = false;
+        connectingTimeoutTimer = null;
+      }
+    }, 90_000);
+  }
+}
 
 async function connectGateway(botToken: string) {
   if (isConnecting) {
     console.log("[Discord] Connexion déjà en cours, skip.");
     return;
   }
-  isConnecting = true;
+  setConnecting(true);
   stopHealthCheck();
+  stopPresenceTimer();
 
   try {
     if (client) {
@@ -2177,19 +2213,35 @@ async function connectGateway(botToken: string) {
 
     client = new Client({ intents });
 
+    // ── Ready ──
     client.once("ready", async () => {
       gatewayReady = true;
       reconnectAttempts = 0;
-      isConnecting = false;
+      setConnecting(false);
       const label = usePrivilegedIntents ? "intents complets" : "intents basiques";
       console.log(`[Discord] ✅ Gateway prêt — ${client!.user!.tag} (${label})`);
       await registerSlashCommands(botToken, client!.user!.id);
       startHealthCheck(botToken);
     });
 
+    // ── Event listeners ──
     client.on("interactionCreate", handleInteraction);
     if (usePrivilegedIntents) {
       client.on("messageCreate", handleMessage);
+      // ── Welcome message on new member ──
+      client.on("guildMemberAdd", async (member) => {
+        try {
+          const ch = member.guild.channels.cache.get(WELCOME_CHANNEL_ID) as TextChannel | undefined;
+          if (!ch) {
+            console.warn(`[Discord] Salon de bienvenue introuvable (${WELCOME_CHANNEL_ID}) sur ${member.guild.name}`);
+            return;
+          }
+          await ch.send(WELCOME_MESSAGE);
+          console.log(`[Discord] 🌴 Message de bienvenue envoyé pour ${member.user.tag}`);
+        } catch (err: any) {
+          console.error("[Discord] Erreur message de bienvenue:", err.message);
+        }
+      });
     }
 
     client.on("error", (err) => {
@@ -2202,40 +2254,65 @@ async function connectGateway(botToken: string) {
       }
     });
 
+    // ── Session invalidated — must hard reconnect ──
     client.on("invalidated" as any, () => {
       console.error("[Discord] Session invalidée par Discord. Reconnexion dans 30s...");
       gatewayReady = false;
-      isConnecting = false;
+      setConnecting(false);
       stopHealthCheck();
       stopPresenceTimer();
       setTimeout(() => scheduleReconnect(botToken), 30_000);
     });
 
+    // ── Shard disconnect: only hard-reconnect on fatal codes.
+    //    discord.js handles transient disconnects (1000, 1001, 4000…) natively.
+    //    Intercepting those causes reconnect conflicts. ──
     client.on("shardDisconnect" as any, (event: any, shardId: number) => {
       const code: number = event?.code ?? 0;
+      // Fatal codes that require us to rebuild the client
+      const FATAL_CODES = [4004, 4010, 4011, 4012, 4013];
+      const is4014 = code === 4014;
       console.warn(`[Discord] Shard ${shardId} déconnecté (code: ${code}).`);
-      gatewayReady = false;
-      isConnecting = false;
-      stopHealthCheck();
-      stopPresenceTimer();
-      if (code === 4014) {
+
+      if (is4014) {
         if (usePrivilegedIntents) {
-          console.warn("[Discord] Intents privilégiés refusés. Reconnexion sans eux...");
+          console.warn("[Discord] Intents privilégiés refusés (4014). Reconnexion sans eux...");
           usePrivilegedIntents = false;
         }
+        gatewayReady = false;
+        setConnecting(false);
+        stopHealthCheck();
+        stopPresenceTimer();
+        scheduleReconnect(botToken);
+        return;
       }
-      scheduleReconnect(botToken);
+
+      if (FATAL_CODES.includes(code)) {
+        console.error(`[Discord] Code fatal ${code} — arrêt de la reconnexion.`);
+        gatewayReady = false;
+        setConnecting(false);
+        stopHealthCheck();
+        stopPresenceTimer();
+        return;
+      }
+
+      // For non-fatal codes (1000, 1001, 4000…) let discord.js reconnect automatically.
+      // Just mark gateway as temporarily unavailable.
+      gatewayReady = false;
     });
 
+    // ── discord.js is natively reconnecting ──
     client.on("shardReconnecting" as any, (shardId: number) => {
-      console.log(`[Discord] Shard ${shardId} reconnexion en cours...`);
-      isConnecting = true;
+      console.log(`[Discord] Shard ${shardId} reconnexion automatique en cours...`);
+      gatewayReady = false;
+      setConnecting(true);
     });
 
+    // ── discord.js successfully resumed ──
     client.on("shardResume" as any, (_shardId: number) => {
       gatewayReady = true;
       reconnectAttempts = 0;
-      isConnecting = false;
+      setConnecting(false);
       console.log("[Discord] ✅ Shard repris, gateway actif.");
       startHealthCheck(botToken);
     });
@@ -2243,7 +2320,7 @@ async function connectGateway(botToken: string) {
     await client.login(botToken);
 
   } catch (err: any) {
-    isConnecting = false;
+    setConnecting(false);
     client = null;
     gatewayReady = false;
 
@@ -2288,7 +2365,7 @@ export function initDiscordGateway(): Promise<void> {
   savedBotToken = botToken;
   reconnectAttempts = 0;
   usePrivilegedIntents = true;
-  isConnecting = false;
+  setConnecting(false);
   console.log("[Discord] Initialisation du gateway...");
   connectGateway(botToken).catch((err) =>
     console.error("[Discord] Erreur init:", err?.message ?? err)
@@ -2301,8 +2378,9 @@ export async function forceReconnect(): Promise<void> {
   if (!botToken) throw new Error("Bot token non configuré");
   console.log("[Discord] Reconnexion forcée demandée.");
   stopHealthCheck();
+  stopPresenceTimer();
   reconnectAttempts = 0;
-  isConnecting = false;
+  setConnecting(false);
   usePrivilegedIntents = true;
   await connectGateway(botToken);
 }
