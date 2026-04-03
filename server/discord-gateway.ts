@@ -1908,6 +1908,122 @@ async function replyWithAI(message: any, userContent: string) {
   }
 }
 
+// ── Inline command handlers (triggered by @mention, no AI needed) ─────────────
+
+const EIGHT_BALL = [
+  "✅ Ouais, clairement !","✅ C'est certain, fonce.","✅ Aucun doute.",
+  "✅ Carrément oui.","✅ T'as ma parole.","🤷 C'est pas très clair...",
+  "🤷 Reviens me voir plus tard.","🤷 Impossible de te répondre maintenant.",
+  "❌ Compte pas là-dessus.","❌ Nope.","❌ Mes sources disent non.",
+  "❌ Très très douteux.",
+];
+
+async function handleInlineCommand(message: any, cmd: string, args: string[]): Promise<boolean> {
+  const u = message.author.username;
+
+  switch (cmd) {
+    case "ping": {
+      const lat = client!.ws.ping;
+      const api = Date.now() - message.createdTimestamp;
+      await message.reply(`🏓 Pong ! Bot : \`${lat}ms\` · API : \`${api}ms\``);
+      return true;
+    }
+    case "roll": {
+      const max = parseInt(args[0]) || 6;
+      const result = Math.floor(Math.random() * max) + 1;
+      await message.reply(`🎲 **${u}** lance un dé à ${max} faces… et obtient **${result}** !`);
+      return true;
+    }
+    case "coinflip":
+    case "pile":
+    case "face": {
+      const side = Math.random() < 0.5 ? "🪙 **Pile**" : "🪙 **Face**";
+      await message.reply(`**${u}** lance la pièce… ${side} !`);
+      return true;
+    }
+    case "8ball": {
+      const rep = EIGHT_BALL[Math.floor(Math.random() * EIGHT_BALL.length)];
+      await message.reply(`🎱 ${rep}`);
+      return true;
+    }
+    case "iq": {
+      const iq = Math.floor(Math.random() * 201);
+      const label = iq < 70 ? "💀 Ouch." : iq < 100 ? "😬 Moyen." : iq < 130 ? "👍 Correct." : iq < 160 ? "🧠 Impressionnant !" : "🚀 Génie absolu.";
+      await message.reply(`🧠 **${u}** a un QI de **${iq}** — ${label}`);
+      return true;
+    }
+    case "uptime": {
+      const s = Math.floor(process.uptime());
+      const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+      const up = client?.uptime ? Math.floor(client.uptime / 1000) : 0;
+      const bh = Math.floor(up / 3600), bm = Math.floor((up % 3600) / 60);
+      await message.reply(`⏱️ Serveur : \`${h}h ${m}m ${sec}s\` · Bot : \`${bh}h ${bm}m\``);
+      return true;
+    }
+    case "help":
+    case "aide":
+    case "commandes": {
+      await message.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0x5865f2)
+            .setTitle("👋 Yo ! C'est moi, GreNouille.exe")
+            .setDescription("Via **@mention** ou commandes **/**  — voilà ce que je sais faire :")
+            .addFields(
+              { name: "📊 Info", value: "`ping` `uptime` `botinfo` `serverinfo` `userinfo` `avatar`" },
+              { name: "🎉 Fun", value: "`coinflip` `roll [N]` `8ball` `iq` `hug` `slap`" },
+              { name: "🤖 IA", value: "Parle-moi directement (`@moi ta question`) — je réponds avec l'IA !" },
+              { name: "🔨 Modération", value: "Commandes slash uniquement : `/ban` `/kick` `/warn` `/clear`" },
+            )
+            .setFooter({ text: "Tip : les commandes slash / et les @mentions, c'est deux choses différentes !" }),
+        ],
+      });
+      return true;
+    }
+    case "hug": {
+      const target = message.mentions.users.first();
+      const name = target ? `**${target.username}**` : "quelqu'un";
+      await message.reply(`🤗 **${u}** fait un gros câlin à ${name} !`);
+      return true;
+    }
+    case "slap": {
+      const target = message.mentions.users.first();
+      const name = target ? `**${target.username}**` : "quelqu'un";
+      await message.reply(`👋 **${u}** gifle ${name} ! Aïe.`);
+      return true;
+    }
+    case "botinfo": {
+      const ping = client!.ws.ping;
+      const up = client?.uptime ? Math.floor(client.uptime / 1000) : 0;
+      const guilds = client?.guilds.cache.size ?? 0;
+      const h = Math.floor(up / 3600), m2 = Math.floor((up % 3600) / 60);
+      await message.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0x5865f2)
+            .setTitle("🤖 GreNouille.exe — Infos")
+            .addFields(
+              { name: "Ping WS", value: `\`${ping}ms\``, inline: true },
+              { name: "Uptime", value: `\`${h}h ${m2}m\``, inline: true },
+              { name: "Serveurs", value: `\`${guilds}\``, inline: true },
+              { name: "Propulsé par", value: "Nexus Panel v1.3", inline: true },
+            )
+            .setFooter({ text: "Toujours là, même à 3h du mat." }),
+        ],
+      });
+      return true;
+    }
+    default:
+      return false; // not a known inline command → hand off to AI
+  }
+}
+
+// Known command names (to avoid sending them to AI)
+const INLINE_COMMANDS = new Set([
+  "ping","roll","coinflip","pile","face","8ball","iq","uptime",
+  "help","aide","commandes","hug","slap","botinfo",
+]);
+
 // ── Handle all messages (mentions + autonomous) ────────────────────────────────
 
 async function handleMessage(message: any) {
@@ -1917,43 +2033,47 @@ async function handleMessage(message: any) {
   const rawContent = message.content.trim();
   const isMention = message.mentions.has(client.user.id);
 
-  // Cache message for context
+  // Cache every message for conversation context
   cacheMessage(message.channel.id, message.author.username, rawContent.slice(0, 200));
 
   if (isMention) {
-    // Strip mention prefix and get the actual content
+    // Strip all mention occurrences and get the actual content
     const userText = rawContent
       .replace(new RegExp(`<@!?${client.user.id}>`, "g"), "")
       .trim();
 
     // Empty mention → friendly greeting
     if (!userText) {
-      await message.reply(`Yo **${message.author.username}** ! 👋 Qu'est-ce que je peux faire pour toi ? Tu peux me parler directement, ou utiliser \`/help\` pour voir mes commandes slash.`);
+      await message.reply(`Yo **${message.author.username}** ! 👋 Tu peux me parler directement ici, ou taper \`help\` après ma mention pour voir ce que je sais faire.`);
       return;
     }
 
-    // Always use AI for mentions — it can handle commands naturally
+    // Parse first word as potential command
+    const parts = userText.split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+    const args = parts.slice(1);
+
+    // 1️⃣ Known inline command → execute directly, no AI
+    if (INLINE_COMMANDS.has(cmd)) {
+      await handleInlineCommand(message, cmd, args);
+      return;
+    }
+
+    // 2️⃣ Natural language → AI responds
     await replyWithAI(message, userText);
     return;
   }
 
   // ── Autonomous messages — 10% chance when not mentioned ──────────────────────
-  if (!rawContent || rawContent.startsWith("/")) return; // ignore slash commands typed in chat
+  if (!rawContent || rawContent.startsWith("/")) return;
 
-  const roll = Math.random();
-  if (roll < 0.10) {
-    // Small delay so it feels natural
+  if (Math.random() < 0.10) {
     await new Promise((r) => setTimeout(r, 1500 + Math.random() * 2000));
-
     try {
       const channelCtx = recentChannelMessages.get(message.channel.id) || [];
       const contextStr = channelCtx.map(m => `${m.author}: ${m.content}`).join("\n");
-
-      const systemPrompt =
-        `Tu es GreNouille.exe, un bot Discord avec de la personnalité. Tu lis la conversation et tu décides spontanément d'intervenir. Ta réponse doit être TRÈS courte (1-2 phrases max), naturelle, et contextuelle au sujet de la conversation. Tu peux être drôle, taquin, pertinent ou juste marquer ta présence. Tu n'as PAS besoin d'être interpellé pour parler. Réponds toujours en français. Ne commence pas par "Je vois que" ou des trucs robotiques.`;
-
-      const prompt = `Voici la conversation récente dans ce salon Discord. Tu décides spontanément d'intervenir avec quelque chose de court et naturel.\n\nConversation :\n${contextStr}\n\nTa réaction spontanée (courte !) :`;
-
+      const systemPrompt = `Tu es GreNouille.exe, un bot Discord avec de la personnalité. Tu interviens spontanément dans la conversation. Ta réponse doit être TRÈS courte (1-2 phrases max), naturelle et contextuelle. Tu peux être drôle, taquin ou pertinent. Réponds en français. Ne commence pas par "Je vois que".`;
+      const prompt = `Conversation récente :\n${contextStr}\n\nTa réaction spontanée courte :`;
       const response = await askAI(prompt, systemPrompt);
       if (response && response.length > 2) {
         await message.channel.send(response.slice(0, 500));
