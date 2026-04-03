@@ -134,6 +134,7 @@ export default function Discord() {
   const [activityName, setActivityName] = useState("");
   const [settingStatus, setSettingStatus] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
 
   const [guilds, setGuilds] = useState<any[]>([]);
   const [selectedGuild, setSelectedGuild] = useState("");
@@ -246,6 +247,19 @@ export default function Discord() {
       showToast(err.response?.data?.error || "Erreur lors du changement de statut", false);
     } finally {
       setSettingStatus(false);
+    }
+  };
+
+  const handleForceReconnect = async () => {
+    setReconnecting(true);
+    try {
+      await axios.post("/api/discord/gateway/reconnect");
+      showToast("Reconnexion lancée — attends quelques secondes...");
+      setTimeout(() => fetchBotInfo(), 4000);
+    } catch (err: any) {
+      showToast(err.response?.data?.error || "Reconnexion échouée", false);
+    } finally {
+      setTimeout(() => setReconnecting(false), 5000);
     }
   };
 
@@ -491,13 +505,35 @@ export default function Discord() {
                   { label: "Latence", value: botInfo.ping >= 0 ? `${botInfo.ping}ms` : "N/A" },
                   { label: "Serveurs", value: botInfo.guildCount ?? guilds.length },
                   { label: "Uptime", value: botInfo.uptime ? `${Math.floor(botInfo.uptime / 3600)}h ${Math.floor((botInfo.uptime % 3600) / 60)}m` : "N/A" },
-                  { label: "Gateway", value: botInfo.gatewayReady ? "Connecté" : "REST uniquement" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between rounded-xl bg-black/20 px-4 py-3">
                     <span className="text-sm text-gray-400">{item.label}</span>
                     <span className="text-sm font-medium text-white">{item.value}</span>
                   </div>
                 ))}
+                <div className="flex items-center justify-between rounded-xl bg-black/20 px-4 py-3">
+                  <span className="text-sm text-gray-400">Gateway</span>
+                  <div className="flex items-center gap-2">
+                    {botInfo.gatewayStatus?.connecting ? (
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-yellow-400">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Connexion...
+                      </span>
+                    ) : botInfo.gatewayReady ? (
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-green-400">
+                        <span className="h-2 w-2 rounded-full bg-green-400" /> Connecté
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-orange-400">
+                        <span className="h-2 w-2 rounded-full bg-orange-400" /> REST uniquement
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {!botInfo.gatewayStatus?.privilegedIntents && (
+                  <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/20 px-4 py-2.5 text-xs text-yellow-400">
+                    ⚠️ Intents basiques — active les privileged intents dans le portail Discord Developer pour les slash commands avancés.
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-[#5865F2]" /></div>
@@ -556,9 +592,19 @@ export default function Discord() {
               </button>
 
               {!botInfo?.gatewayReady && (
-                <p className="text-xs text-yellow-400/70 text-center">
-                  ⚠️ Le changement de statut nécessite une connexion Gateway.
-                </p>
+                <div className="space-y-2">
+                  <p className="text-xs text-yellow-400/70 text-center">
+                    ⚠️ Le changement de statut nécessite une connexion Gateway.
+                  </p>
+                  <button
+                    onClick={handleForceReconnect}
+                    disabled={reconnecting}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-medium text-orange-400 hover:bg-orange-500/20 disabled:opacity-50 transition-colors"
+                  >
+                    {reconnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    {reconnecting ? "Reconnexion en cours..." : "Forcer la reconnexion Gateway"}
+                  </button>
+                </div>
               )}
             </div>
           </motion.div>

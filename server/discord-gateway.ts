@@ -1552,43 +1552,84 @@ async function handleMention(message: any) {
   }
 }
 
-// ── Gateway init ───────────────────────────────────────────────────────────────
+// ── Gateway state ──────────────────────────────────────────────────────────────
 
 let reconnectAttempts = 0;
-const MAX_RECONNECT_DELAY = 60_000;
 let usePrivilegedIntents = true;
+let isConnecting = false;
+let healthCheckTimer: ReturnType<typeof setInterval> | null = null;
+let savedBotToken: string | null = null;
 
-async function scheduleReconnect(botToken: string) {
-  if (reconnectAttempts >= 25) {
-    console.warn("[Discord] Max tentatives atteint. Nouvelle tentative dans 5 minutes...");
+// ── Health check ───────────────────────────────────────────────────────────────
+
+function stopHealthCheck() {
+  if (healthCheckTimer) {
+    clearInterval(healthCheckTimer);
+    healthCheckTimer = null;
+  }
+}
+
+function startHealthCheck(botToken: string) {
+  stopHealthCheck();
+  healthCheckTimer = setInterval(() => {
+    if (isConnecting) return;
+    if (!client || !gatewayReady) {
+      console.warn("[Discord] Health check: gateway down, tentative de reconnexion...");
+      scheduleReconnect(botToken);
+      return;
+    }
+    const ping = client.ws.ping;
+    const uptime = client.uptime ?? 0;
+    if (ping === -1 && uptime > 45_000) {
+      console.warn("[Discord] Health check: ping négatif après 45s, reconnexion...");
+      gatewayReady = false;
+      scheduleReconnect(botToken);
+    }
+  }, 30_000);
+}
+
+// ── Reconnect scheduler ────────────────────────────────────────────────────────
+
+function scheduleReconnect(botToken: string) {
+  if (isConnecting) return;
+  reconnectAttempts++;
+  if (reconnectAttempts > 20) {
+    console.warn("[Discord] Trop de tentatives. Pause de 5 minutes puis reset...");
     reconnectAttempts = 0;
+    usePrivilegedIntents = true;
     setTimeout(() => connectGateway(botToken), 5 * 60_000);
     return;
   }
-  reconnectAttempts++;
-  const delay = Math.min(5_000 * Math.pow(1.5, reconnectAttempts - 1), MAX_RECONNECT_DELAY);
+  const delay = Math.min(3_000 * Math.pow(1.5, reconnectAttempts - 1), 60_000);
   console.log(`[Discord] Reconnexion dans ${Math.round(delay / 1000)}s (tentative ${reconnectAttempts})...`);
   setTimeout(() => connectGateway(botToken), delay);
 }
 
+// ── Connect ────────────────────────────────────────────────────────────────────
+
 async function connectGateway(botToken: string) {
+  if (isConnecting) {
+    console.log("[Discord] Connexion déjà en cours, skip.");
+    return;
+  }
+  isConnecting = true;
+  stopHealthCheck();
+
   try {
     if (client) {
       client.removeAllListeners();
       try { client.destroy(); } catch {}
       client = null;
-      gatewayReady = false;
     }
+    gatewayReady = false;
 
     const intents: GatewayIntentBits[] = [
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.GuildModeration,
     ];
-
     if (usePrivilegedIntents) {
-      intents.push(GatewayIntentBits.GuildMembers);
-      intents.push(GatewayIntentBits.MessageContent);
+      intents.push(GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent);
     }
 
     client = new Client({ intents });
@@ -1596,12 +1637,14 @@ async function connectGateway(botToken: string) {
     client.once("ready", async () => {
       gatewayReady = true;
       reconnectAttempts = 0;
-      console.log(`[Discord] Gateway prêt — connecté en tant que ${client!.user!.tag}${usePrivilegedIntents ? "" : " (intents basiques)"}`);
+      isConnecting = false;
+      const label = usePrivilegedIntents ? "intents complets" : "intents basiques";
+      console.log(`[Discord] ✅ Gateway prêt — ${client!.user!.tag} (${label})`);
       await registerSlashCommands(botToken, client!.user!.id);
+      startHealthCheck(botToken);
     });
 
     client.on("interactionCreate", handleInteraction);
-
     if (usePrivilegedIntents) {
       client.on("messageCreate", handleMention);
     }
@@ -1610,63 +1653,108 @@ async function connectGateway(botToken: string) {
       console.error("[Discord] Erreur gateway:", err.message);
     });
 
-    client.on("invalidated" as any, () => {
-      console.error("[Discord] Session invalidée par Discord. Reconnexion...");
-      gatewayReady = false;
-      scheduleReconnect(botToken);
+    client.on("warn", (info) => {
+      if (!info.includes("HeartbeatTimer") && !info.includes("429")) {
+        console.warn("[Discord] Avertissement:", info);
+      }
     });
 
-    client.on("shardDisconnect" as any, (_event: any, shardId: number) => {
-      console.warn(`[Discord] Shard ${shardId} déconnecté.`);
+    client.on("invalidated" as any, () => {
+      console.error("[Discord] Session invalidée par Discord. Reconnexion dans 30s...");
       gatewayReady = false;
+      isConnecting = false;
+      stopHealthCheck();
+      setTimeout(() => scheduleReconnect(botToken), 30_000);
+    });
+
+    client.on("shardDisconnect" as any, (event: any, shardId: number) => {
+      const code: number = event?.code ?? 0;
+      console.warn(`[Discord] Shard ${shardId} déconnecté (code: ${code}).`);
+      gatewayReady = false;
+      isConnecting = false;
+      stopHealthCheck();
+      if (code === 4014) {
+        if (usePrivilegedIntents) {
+          console.warn("[Discord] Intents privilégiés refusés. Reconnexion sans eux...");
+          usePrivilegedIntents = false;
+        }
+      }
       scheduleReconnect(botToken);
     });
 
     client.on("shardReconnecting" as any, (shardId: number) => {
-      console.log(`[Discord] Shard ${shardId} en cours de reconnexion...`);
+      console.log(`[Discord] Shard ${shardId} reconnexion en cours...`);
+      isConnecting = true;
     });
 
-    client.on("shardResume" as any, (shardId: number) => {
+    client.on("shardResume" as any, (_shardId: number) => {
       gatewayReady = true;
       reconnectAttempts = 0;
-      console.log(`[Discord] Shard ${shardId} repris.`);
+      isConnecting = false;
+      console.log("[Discord] ✅ Shard repris, gateway actif.");
+      startHealthCheck(botToken);
     });
 
     await client.login(botToken);
+
   } catch (err: any) {
+    isConnecting = false;
+    client = null;
+    gatewayReady = false;
+
     const msg: string = err?.message ?? "";
     const isIntentError =
       msg.toLowerCase().includes("disallowed intent") ||
-      msg.includes("4014") ||
-      err?.code === 4014;
+      err?.code === 4014 ||
+      msg.includes("4014");
 
     if (isIntentError && usePrivilegedIntents) {
-      console.warn("[Discord] Intents privilégiés refusés (4014). Active-les dans le portail Discord Developer.");
-      console.warn("[Discord] Reconnexion sans GuildMembers/MessageContent...");
+      console.warn("[Discord] ⚠️  Intents privilégiés refusés (4014).");
+      console.warn("[Discord] → Active 'SERVER MEMBERS INTENT' et 'MESSAGE CONTENT INTENT'");
+      console.warn("[Discord] → Portail Discord Developer > Applications > Bot > Privileged Gateway Intents");
+      console.warn("[Discord] Reconnexion sans intents privilégiés...");
       usePrivilegedIntents = false;
-      client = null;
-      gatewayReady = false;
       return connectGateway(botToken);
     }
 
-    console.error("[Discord] Impossible de se connecter:", msg);
-    client = null;
-    gatewayReady = false;
+    if (msg.includes("TOKEN_INVALID") || msg.includes("An invalid token")) {
+      console.error("[Discord] ❌ Token invalide. Vérifier DISCORD_BOT_TOKEN.");
+      return;
+    }
+
+    console.error(`[Discord] ❌ Connexion échouée: ${msg}`);
     scheduleReconnect(botToken);
   }
 }
 
+// ── Public exports ─────────────────────────────────────────────────────────────
+
 export function initDiscordGateway(): Promise<void> {
   const botToken = process.env.DISCORD_BOT_TOKEN;
   if (!botToken) {
-    console.log("[Discord] Bot token not configured, skipping gateway init.");
+    console.log("[Discord] Bot token non configuré, gateway désactivé.");
     return Promise.resolve();
   }
+  savedBotToken = botToken;
   reconnectAttempts = 0;
+  usePrivilegedIntents = true;
+  isConnecting = false;
+  console.log("[Discord] Initialisation du gateway...");
   connectGateway(botToken).catch((err) =>
-    console.error("[Discord] Gateway init failed:", err?.message ?? err)
+    console.error("[Discord] Erreur init:", err?.message ?? err)
   );
   return Promise.resolve();
+}
+
+export async function forceReconnect(): Promise<void> {
+  const botToken = savedBotToken || process.env.DISCORD_BOT_TOKEN;
+  if (!botToken) throw new Error("Bot token non configuré");
+  console.log("[Discord] Reconnexion forcée demandée.");
+  stopHealthCheck();
+  reconnectAttempts = 0;
+  isConnecting = false;
+  usePrivilegedIntents = true;
+  await connectGateway(botToken);
 }
 
 export function getDiscordClient(): Client | null {
@@ -1675,6 +1763,18 @@ export function getDiscordClient(): Client | null {
 
 export function isGatewayReady(): boolean {
   return gatewayReady && client !== null;
+}
+
+export function getGatewayStatus() {
+  return {
+    ready: gatewayReady && client !== null,
+    connecting: isConnecting,
+    ping: client?.ws.ping ?? -1,
+    uptime: client?.uptime ? Math.floor(client.uptime / 1000) : null,
+    reconnectAttempts,
+    privilegedIntents: usePrivilegedIntents,
+    tokenConfigured: !!process.env.DISCORD_BOT_TOKEN,
+  };
 }
 
 export async function setBotStatus(status: PresenceStatusData, activityName?: string, activityType?: number) {

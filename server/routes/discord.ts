@@ -2,7 +2,7 @@ import { Router } from "express";
 import axios from "axios";
 import { authenticateToken } from "./auth.js";
 import db from "../db.js";
-import { getBotInfo, getBotGuilds, setBotStatus, isGatewayReady } from "../discord-gateway.js";
+import { getBotInfo, getBotGuilds, setBotStatus, isGatewayReady, forceReconnect, getGatewayStatus } from "../discord-gateway.js";
 
 const router = Router();
 const DISCORD_API = "https://discord.com/api/v10";
@@ -33,14 +33,29 @@ router.get("/configured", authenticateToken, (_req, res) => {
 router.get("/bot/info", authenticateToken, async (_req, res) => {
   if (!requireBot(res)) return;
   try {
+    const gwStatus = getGatewayStatus();
     const info = getBotInfo();
     if (!info) {
       const r = await axios.get(`${DISCORD_API}/users/@me`, { headers: botHeaders() });
-      return res.json({ ...r.data, gatewayReady: false, ping: -1 });
+      return res.json({ ...r.data, gatewayReady: false, ping: -1, gatewayStatus: gwStatus });
     }
-    res.json({ ...info, gatewayReady: isGatewayReady() });
+    res.json({ ...info, gatewayReady: isGatewayReady(), gatewayStatus: gwStatus });
   } catch (err: any) {
     res.status(500).json({ error: "Failed to get bot info" });
+  }
+});
+
+router.get("/gateway/status", authenticateToken, (_req, res) => {
+  res.json(getGatewayStatus());
+});
+
+router.post("/gateway/reconnect", authenticateToken, async (_req, res) => {
+  if (!requireBot(res)) return;
+  try {
+    await forceReconnect();
+    res.json({ success: true, message: "Reconnexion lancée" });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Reconnexion échouée" });
   }
 });
 
