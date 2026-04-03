@@ -649,7 +649,7 @@ export default function Themes() {
                         </div>
                       )}
                       <button onClick={(e) => { e.stopPropagation(); setPreviewTheme(opt.id); }}
-                        className="absolute bottom-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                        className="absolute bottom-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150"
                         style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.2)" }}
                         title="Prévisualiser"
                       >

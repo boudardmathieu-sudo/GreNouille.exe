@@ -350,10 +350,11 @@ export default function Spotify() {
       </AnimatePresence>
 
       {/* ── Main layout: Now Playing (left) + Discovery (right) ── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
 
         {/* LEFT: Now Playing panel */}
-        <div className="flex flex-col w-72 xl:w-80 shrink-0 border-r border-white/8 bg-gradient-to-b from-[#0a0a14] to-[#050510] p-5 gap-5 overflow-hidden">
+        <div className="flex flex-col md:w-72 xl:w-80 shrink-0 md:border-r border-b md:border-b-0 border-white/8 bg-gradient-to-b from-[#0a0a14] to-[#050510] p-4 md:p-5 gap-4 md:gap-5 overflow-hidden md:overflow-hidden">
+
 
           {/* Header */}
           <div className="flex items-center justify-between shrink-0">
@@ -390,8 +391,8 @@ export default function Spotify() {
             </div>
           )}
 
-          {/* Album art */}
-          <div className="aspect-square w-full shrink-0 rounded-2xl overflow-hidden bg-white/5 relative">
+          {/* Album art — desktop only (full square) */}
+          <div className="hidden md:block aspect-square w-full shrink-0 rounded-2xl overflow-hidden bg-white/5 relative">
             <AnimatePresence mode="wait">
               {currentTrack?.album?.images?.[0]?.url ? (
                 <motion.img key={currentTrack.id} initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
@@ -413,8 +414,41 @@ export default function Spotify() {
             )}
           </div>
 
-          {/* Track info + like */}
-          <div className="flex items-start gap-2 shrink-0">
+          {/* Mobile compact player row */}
+          <div className="flex md:hidden items-center gap-3 shrink-0">
+            <div className="relative shrink-0">
+              {currentTrack?.album?.images?.[0]?.url ? (
+                <img src={currentTrack.album.images[0].url} alt="Album" className="h-14 w-14 rounded-xl object-cover" />
+              ) : (
+                <div className="h-14 w-14 rounded-xl bg-white/5 flex items-center justify-center">
+                  <Music className="h-7 w-7 text-gray-700" />
+                </div>
+              )}
+              {currentTrack && (
+                <button onClick={() => setIsFullScreen(true)} className="absolute -bottom-1 -right-1 p-1 rounded-full bg-black/70 text-white">
+                  <Maximize2 className="h-2.5 w-2.5" />
+                </button>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <AnimatePresence mode="wait">
+                <motion.p key={currentTrack?.id || "none"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="font-bold text-white text-sm truncate"
+                >{currentTrack?.name || "Aucune lecture"}</motion.p>
+              </AnimatePresence>
+              <p className="text-xs text-gray-400 truncate mt-0.5">
+                {currentTrack?.artists?.map((a: any) => a.name).join(", ") || "Lance un titre Spotify"}
+              </p>
+            </div>
+            {currentTrack && (
+              <button onClick={() => toggleLike(currentTrack.id)} className={`shrink-0 transition-all hover:scale-110 ${likedIds.has(currentTrack.id) ? "text-[#1DB954]" : "text-gray-600 hover:text-white"}`}>
+                <Heart className={`h-4 w-4 ${likedIds.has(currentTrack.id) ? "fill-current" : ""}`} />
+              </button>
+            )}
+          </div>
+
+          {/* Track info + like — desktop only */}
+          <div className="hidden md:flex items-start gap-2 shrink-0">
             <div className="flex-1 min-w-0">
               <AnimatePresence mode="wait">
                 <motion.p key={currentTrack?.id || "none"} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}

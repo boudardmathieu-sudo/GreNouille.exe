@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Shield, Activity, Users, Zap, Plus, X, Music, Cloud, MessageSquare, StickyNote, Link2, RefreshCw, FileDown, Check } from "lucide-react";
+import { Shield, Activity, Users, Zap, Plus, X, Music, Cloud, MessageSquare, StickyNote, Link2, RefreshCw, FileDown, Check, Clock, Bot, Cpu } from "lucide-react";
 import axios from "axios";
 
 const ALL_WIDGETS = [
@@ -11,11 +11,15 @@ const ALL_WIDGETS = [
   { id: "discord", label: "Discord", icon: MessageSquare, color: "text-indigo-400", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
   { id: "notes", label: "Notes rapides", icon: StickyNote, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
   { id: "links", label: "Liens rapides", icon: Link2, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20" },
+  { id: "clock", label: "Horloge", icon: Clock, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
+  { id: "nexusai", label: "NEXUS AI", icon: Bot, color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20" },
+  { id: "system", label: "Système", icon: Cpu, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20" },
 ];
 
 const WIDGET_LINKS: Record<string, string> = {
   spotify: "/spotify",
   discord: "/discord",
+  nexusai: "/ai",
 };
 
 const WIDGET_STORAGE_KEY = "nexus-active-widgets";
@@ -24,28 +28,149 @@ const LINKS_WIDGET_KEY = "nexus-widget-links";
 
 function SpotifyWidget() {
   const [track, setTrack] = useState<any>(null);
+  const [progressMs, setProgressMs] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchCurrent = useCallback(() => {
     axios.get("/api/spotify/player/current")
-      .then((r) => { if (r.data?.item) setTrack(r.data.item); })
+      .then((r) => {
+        if (r.data?.item) {
+          setTrack(r.data.item);
+          setProgressMs(r.data.progress_ms || 0);
+          setIsPlaying(r.data.is_playing || false);
+        } else {
+          setTrack(null);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-    const i = setInterval(() => {
-      axios.get("/api/spotify/player/current").then((r) => { if (r.data?.item) setTrack(r.data.item); }).catch(() => {});
-    }, 5000);
-    return () => clearInterval(i);
   }, []);
+
+  useEffect(() => {
+    fetchCurrent();
+    const poll = setInterval(fetchCurrent, 5000);
+    return () => clearInterval(poll);
+  }, [fetchCurrent]);
+
+  useEffect(() => {
+    if (tickRef.current) clearInterval(tickRef.current);
+    if (isPlaying) {
+      tickRef.current = setInterval(() => setProgressMs((p) => p + 1000), 1000);
+    }
+    return () => { if (tickRef.current) clearInterval(tickRef.current); };
+  }, [isPlaying, track?.id]);
+
   if (loading) return <p className="text-sm text-gray-500">Chargement...</p>;
   if (!track) return <p className="text-sm text-gray-500">Aucune lecture en cours</p>;
+
+  const pct = track.duration_ms ? Math.min(100, (progressMs / track.duration_ms) * 100) : 0;
+  const fmt = (ms: number) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`; };
+
   return (
     <div className="flex items-center gap-3">
-      {track.album?.images?.[0]?.url && <img src={track.album.images[0].url} alt="Album" className="h-12 w-12 rounded-lg shrink-0" />}
-      <div className="min-w-0">
+      {track.album?.images?.[0]?.url && <img src={track.album.images[0].url} alt="Album" className="h-12 w-12 rounded-lg shrink-0 shadow-md" />}
+      <div className="min-w-0 flex-1">
         <p className="font-semibold text-white text-sm truncate">{track.name}</p>
         <p className="text-xs text-gray-400 truncate">{track.artists?.map((a: any) => a.name).join(", ")}</p>
         <div className="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden">
-          <motion.div className="h-full rounded-full bg-emerald-400" initial={{ width: "0%" }} animate={{ width: "60%" }} transition={{ duration: 3, repeat: Infinity, repeatType: "mirror" }} />
+          <div className="h-full rounded-full bg-emerald-400 transition-all duration-1000" style={{ width: `${pct}%` }} />
         </div>
+        <div className="flex justify-between text-[10px] text-gray-600 mt-0.5">
+          <span>{fmt(progressMs)}</span>
+          <span>{fmt(track.duration_ms)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClockWidget() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const days = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+  const months = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-3xl font-black text-white tabular-nums tracking-tight">
+        {now.getHours().toString().padStart(2, "0")}:{now.getMinutes().toString().padStart(2, "0")}
+        <span className="text-lg text-gray-500 ml-1">:{now.getSeconds().toString().padStart(2, "0")}</span>
+      </p>
+      <p className="text-sm text-gray-400">{days[now.getDay()]} {now.getDate()} {months[now.getMonth()]} {now.getFullYear()}</p>
+    </div>
+  );
+}
+
+function NexusAIWidget() {
+  const [sessions, setSessions] = useState<number | null>(null);
+  useEffect(() => {
+    axios.get("/api/database/stats").then((r) => setSessions(r.data.aiSessions ?? null)).catch(() => {});
+  }, []);
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-500/20">
+        <Bot className="h-6 w-6 text-violet-400" />
+      </div>
+      <div>
+        <p className="font-semibold text-white text-sm">NEXUS AI</p>
+        <p className="text-xs text-gray-500 mt-0.5">
+          {sessions !== null ? `${sessions} session${sessions !== 1 ? "s" : ""} enregistrée${sessions !== 1 ? "s" : ""}` : "Assistant IA prêt"}
+        </p>
+        <div className="mt-1.5 flex gap-0.5">
+          {[1,2,3,4,5].map((i) => (
+            <div key={i} className="h-1 w-4 rounded-full bg-violet-500/20 overflow-hidden">
+              <motion.div className="h-full rounded-full bg-violet-400" animate={{ width: ["0%", "100%", "0%"] }} transition={{ duration: 1.5, delay: i * 0.2, repeat: Infinity }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SystemWidget() {
+  const [latency, setLatency] = useState<number | null>(null);
+  const [uptime] = useState(() => Date.now());
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const measure = async () => {
+      const t = Date.now();
+      try { await axios.get("/api/health"); setLatency(Date.now() - t); } catch { setLatency(null); }
+    };
+    measure();
+    const i = setInterval(measure, 10000);
+    return () => clearInterval(i);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setElapsed(Math.floor((Date.now() - uptime) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, [uptime]);
+
+  const fmt = (s: number) => {
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${sec}s` : `${sec}s`;
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <div className="flex flex-col gap-0.5">
+        <p className="text-[10px] text-gray-500 uppercase tracking-wider">Latence API</p>
+        <p className="text-xl font-black text-white">{latency !== null ? `${latency}ms` : "—"}</p>
+        <div className="h-1 rounded-full bg-white/10 overflow-hidden mt-1">
+          <div className="h-full rounded-full bg-yellow-400 transition-all duration-500"
+            style={{ width: latency ? `${Math.min(100, (latency / 200) * 100)}%` : "0%" }} />
+        </div>
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <p className="text-[10px] text-gray-500 uppercase tracking-wider">Session</p>
+        <p className="text-xl font-black text-white">{fmt(elapsed)}</p>
+        <p className="text-[10px] text-emerald-400 mt-1">● En ligne</p>
       </div>
     </div>
   );
@@ -185,6 +310,9 @@ function WidgetContent({ id }: { id: string }) {
   if (id === "discord") return <DiscordWidget />;
   if (id === "notes") return <NotesWidget />;
   if (id === "links") return <LinksWidget />;
+  if (id === "clock") return <ClockWidget />;
+  if (id === "nexusai") return <NexusAIWidget />;
+  if (id === "system") return <SystemWidget />;
   return null;
 }
 
