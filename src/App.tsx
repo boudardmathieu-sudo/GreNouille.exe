@@ -27,6 +27,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { SpotifyProvider } from "./context/SpotifyContext";
 import { useIsMobile } from "./hooks/useMediaQuery";
+import ContextMenu from "./components/ContextMenu";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -64,6 +65,8 @@ function AppContent() {
   }
 
   return (
+    <>
+    <ContextMenu />
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
@@ -202,6 +205,7 @@ function AppContent() {
       />
       <Route path="/" element={<Navigate to="/dashboard" />} />
     </Routes>
+    </>
   );
 }
 

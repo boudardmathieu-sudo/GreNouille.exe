@@ -16,10 +16,12 @@ export default function Splashscreen({ onComplete }: { onComplete: () => void })
       onComplete();
       return;
     }
-    const exit = setTimeout(() => setVisible(false), 3000);
-    const done = setTimeout(onComplete, 3600);
+    // Netflix plays a ~3s video — give it extra time before fading
+    const duration = theme === "netflix" ? 4800 : 3000;
+    const exit = setTimeout(() => setVisible(false), duration);
+    const done = setTimeout(onComplete, duration + 600);
     return () => { clearTimeout(exit); clearTimeout(done); };
-  }, [onComplete, enabled]);
+  }, [onComplete, enabled, theme]);
 
   if (!enabled) return null;
 
