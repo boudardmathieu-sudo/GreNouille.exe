@@ -22,6 +22,9 @@ export default defineConfig(({ mode }) => {
         env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || ''
       ),
     },
+    build: {
+      chunkSizeWarningLimit: 1000,
+    },
     server: {
       hmr: true,
       host: '0.0.0.0',
